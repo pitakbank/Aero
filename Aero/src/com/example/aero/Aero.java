@@ -3,13 +3,16 @@ package com.example.aero;
 import android.os.Bundle;
 import android.app.Activity;
 import android.view.Menu;
+import org.apache.cordova.DroidGap;
 
-public class Aero extends Activity {
+public class Aero extends DroidGap {
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_aero);
+        super.setIntegerProperty("splashscreen", R.drawable.splash2);
+        super.loadUrl("file:///android_asset/www/home_v.2.0.html", 10000);
+//        super.loadUrl("file:///android_asset/www/index_datepicker.html");
     }
 
 
