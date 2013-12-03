@@ -1,0 +1,10 @@
+/*body {
+	-webkit-text-size-adjust: none;
+	background: #5a5959 url(../images/menuBg.gif) top left repeat-y;
+}*/
+.content_homepage {
+    background-image: url('images/homepage_bg.png');  
+    background-position: center bottom;  
+    background-repeat: no-repeat;  
+    background-attachment: fixed;
+}

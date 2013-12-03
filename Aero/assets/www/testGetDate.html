@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<p id="demo">Click the button to evaluate/execute JavaScript code/expressions.</p>
+
+<button onclick="myFunction()">Try it</button>
+
+<script>
+function myFunction()
+{
+// var x = 10;
+// var y = 20;
+// var a = eval("Date(1385447280000)") + "<br>";
+// var b = eval("2+2") + "<br>";
+// var c = eval("x+17") + "<br>";
+
+
+
+//var res = a + b + c ;
+//document.getElementById("demo").innerHTML=res;
+
+var evaDate = eval("Date(1385447280000)");
+
+//DateFormat formatter = new SimpleDateFormat("E MMM dd HH:mm:ss Z yyyy");
+//Date date = (Date)formatter.parse(dateStr);
+
+SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd yyyy hh:mm aaa",Locale.US);
+
+var date = "Read date "+ format.parse(evaDate);
+document.getElementById("demo").innerHTML= date ;
+
+
+}
+</script>
+
+</body>
+</html>

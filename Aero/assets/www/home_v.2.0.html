@@ -1,0 +1,601 @@
+<html>
+<head>
+  <title>AEROTHAI</title>
+  <meta http-equiv='Content-Type' content='text/html; charset=utf-8'/>
+  <!-- <meta name="HandheldFriendly" content="true"> -->
+  <!-- <meta name="viewport" content="width=device-width, intial-scale=1.0, maximum-scale=1, user-scalable=no, target-densityDpi=device-dpi"/> -->
+  <!-- <link rel="stylesheet" href="css/main.css" /> -->
+  <link href="lib/jquery.mobile-1.3.2.min.css" rel="stylesheet" type="text/css"/>
+  <script src="lib/jquery-1.8.3.min.js" type="text/javascript"></script>
+  <script src="lib/jquery.mobile-1.3.2.min.js" type="text/javascript"></script>
+
+  <script src="cordova.js"></script>
+
+  <script type="text/javascript" src="js/app.js"></script>
+  <script src="js/datePickerPlugin.js"></script>
+
+  <link rel="stylesheet" href="styles/jquery.mobile.min.css"/>
+  <link rel="stylesheet" href="styles/jquery.mobile.structure.min.css"/>
+  <link rel="stylesheet" href="css/website.css" type="text/css" media="screen"/>
+  <script type="text/javascript" src="js/jquery.tinyscrollbar.min.js"></script>
+
+
+  <script type="text/javascript">
+
+    var EtdArr = new Array();
+    var AtdArr = new Array();
+    var EtaArr = new Array();
+    var AtaArr = new Array();
+
+    function onBodyLoad() {
+      document.addEventListener("deviceready", onDeviceReady, false);
+      $('#scrollbar1').tinyscrollbar(); 
+    }
+
+    function onDeviceReady() {
+      navigator.splashscreen.hide();
+    }
+
+    var departureDateAndTime;
+    var aircraft;
+    var callsign;
+    var departureAerodrome;
+    var depDestLinkLogic;
+    var destinationAerodrome;
+    var eta;
+    var etd;
+    var flightPlanType;
+    var flightRule;
+    var flightType;
+    var includeMember;
+    var includeNonMember;
+    var level;
+    var registration;
+    var route;
+    var speed;
+    var squawk;
+    var pageIndex;
+    var pageSize;
+    var sortFields;
+    var AmountOfPlans = 0;
+    var AmountOfPages = 0;
+    var flightNumber = 0;
+
+
+    $(function () {
+
+      $("#formsubmit").submit(function () {
+
+        departureDateAndTime = document.getElementById('departureDateAndTime');
+        aircraft = document.getElementById('aircraft');
+        callsign = document.getElementById('callsign');
+        departureAerodrome = document.getElementById('departureAerodrome');
+        depDestLinkLogic = $("#depDestLinkLogic").val();
+        destinationAerodrome = document.getElementById('destinationAerodrome');
+        eta = document.getElementById('eta');
+        etd = document.getElementById('etd');
+        flightPlanType = document.getElementById('flightPlanType');
+        flightRule = document.getElementById('flightRule');
+        flightType = document.getElementById('flightType');
+        includeMember = document.getElementById('includeMember');
+        includeNonMember = document.getElementById('includeNonMember');
+        level = document.getElementById('level');
+        registration = document.getElementById('registration');
+        route = document.getElementById('route');
+        speed = document.getElementById('speed');
+        squawk = document.getElementById('squawk');
+        pageIndex = document.getElementById('pageIndex');
+        pageSize = document.getElementById('pageSize');
+        sortFields = document.getElementById('sortFields');
+
+
+        var dateSplit = departureDateAndTime.value.split('/');
+        var year = dateSplit[2];
+        var month = dateSplit[1];
+        var day = dateSplit[0];
+
+        // var postData = new Object();
+        // postData.departureDateAndTime = year + month + day;
+        // postData.aircraft = aircraft.value;
+        // postData.callsign = callsign.value;
+        // postData.departureAerodrome = departureAerodrome.value;
+        // postData.depDestLinkLogic = depDestLinkLogic;
+        // postData.destinationAerodrome = destinationAerodrome.value;
+        // postData.eta = eta.value;
+        // postData.etd = etd.value;
+        // postData.flightPlanType = flightPlanType.value;
+        // postData.flightRule = flightRule.value;
+        // postData.flightType = flightType.value;
+        // postData.includeMember = includeMember.value;
+        // postData.includeNonMember = includeNonMember.value;
+        // postData.level = level.value;
+        // postData.registration = registration.value;
+        // postData.route = route.value;
+        // postData.speed = speed.value;
+        // postData.squawk = squawk;
+        //     postData.pageIndex = pageIndex.value; // หมายเลขหน้า
+        //     postData.pageSize = pageSize.value; // จำนวนหน้าต่อเพจ
+        //     postData.sortFields = sortFields.value;
+
+        var postData2 = new Object();
+        postData2.departureDateAndTime = year + month + day;
+        postData2.aircraft = aircraft.value;
+        postData2.callsign = callsign.value;
+        postData2.departureAerodrome = departureAerodrome.value;
+        postData2.depDestLinkLogic = depDestLinkLogic;
+        postData2.destinationAerodrome = destinationAerodrome.value;
+        postData2.eta = eta.value;
+        postData2.etd = etd.value;
+        postData2.flightPlanType = flightPlanType.value;
+        postData2.flightRule = flightRule.value;
+        postData2.flightType = flightType.value;
+        postData2.includeMember = includeMember.value;
+        postData2.includeNonMember = includeNonMember.value;
+        postData2.level = level.value;
+        postData2.registration = registration.value;
+        postData2.route = route.value;
+        postData2.speed = speed.value;
+        postData2.squawk = squawk.value;
+        postData2.pageIndex = pageIndex.value;
+        postData2.pageSize = pageSize.value;
+        postData2.sortFields = "";
+
+        // count number of page
+        $.ajax({
+          type: 'POST',
+          url: 'http://172.16.21.187/FPLINet/FlightPlanServices.asmx/CountFlightHistoryFlightPlans',
+          dataType: 'json',
+          contentType: 'application/json; charset=utf-8',
+          data: JSON.stringify(postData2),
+          success: function (result) {
+            alert("Amount of plans" + result.d);
+            AmountOfPlans = result.d;
+
+            AmountOfPages = AmountOfPlans/pageSize.value;
+
+            getFlightPlans(0);
+
+          },
+          error: function (result) {
+            alert(result.responseText);
+          }
+        }); // ajax
+        return false; // ไม่ให้ form มัน load ใหม่
+
+    }); //post form
+
+}); //function
+
+function getFlightPlans(pageIndexParam) {
+  departureDateAndTime = document.getElementById('departureDateAndTime');
+  aircraft = document.getElementById('aircraft');
+  callsign = document.getElementById('callsign');
+  departureAerodrome = document.getElementById('departureAerodrome');
+  depDestLinkLogic = $("#depDestLinkLogic").val();
+  destinationAerodrome = document.getElementById('destinationAerodrome');
+  eta = document.getElementById('eta');
+  etd = document.getElementById('etd');
+  flightPlanType = document.getElementById('flightPlanType');
+  flightRule = document.getElementById('flightRule');
+  flightType = document.getElementById('flightType');
+  includeMember = document.getElementById('includeMember');
+  includeNonMember = document.getElementById('includeNonMember');
+  level = document.getElementById('level');
+  registration = document.getElementById('registration');
+  route = document.getElementById('route');
+  speed = document.getElementById('speed');
+  squawk = document.getElementById('squawk');
+  pageIndex = pageIndexParam;
+  pageSize = document.getElementById('pageSize');
+  sortFields = document.getElementById('sortFields');
+
+  var dateSplit = departureDateAndTime.value.split('/');
+  var year = dateSplit[2];
+  var month = dateSplit[1];
+  var day = dateSplit[0];
+
+  var postData = new Object();
+  postData.departureDateAndTime = year + month + day;
+  postData.aircraft = aircraft.value;
+  postData.callsign = callsign.value;
+  postData.departureAerodrome = departureAerodrome.value;
+  postData.depDestLinkLogic = depDestLinkLogic;
+  postData.destinationAerodrome = destinationAerodrome.value;
+  postData.eta = eta.value;
+  postData.etd = etd.value;
+  postData.flightPlanType = flightPlanType.value;
+  postData.flightRule = flightRule.value;
+  postData.flightType = flightType.value;
+  postData.includeMember = includeMember.value;
+  postData.includeNonMember = includeNonMember.value;
+  postData.level = level.value;
+  postData.registration = registration.value;
+  postData.route = route.value;
+  postData.speed = speed.value;
+  postData.squawk = squawk.value;
+    postData.pageIndex = pageIndex; // หมายเลขหน้า
+    postData.pageSize = pageSize.value; // จำนวนหน้าต่อเพจ
+    postData.sortFields = sortFields.value;
+
+    alert("get flight History !!!!--- date:" + dateSplit + "pageIndex:" + pageIndex);
+
+    $.ajax({
+      type: 'POST',
+      url: 'http://172.16.21.187/FPLINet/FlightPlanServices.asmx/GetFlightHistoryFlightPlans',
+      dataType: 'json',
+      contentType: 'application/json; charset=utf-8',
+      data: JSON.stringify(postData),
+        // async: false,
+        success: function (result) {
+          alert("---Succeses get flight History !!!!");
+
+          var mytable = "Found " + AmountOfPlans + " flights<br><table border=\"1\" cellpadding=\"0\" cellspacing=\"0\" style=\"color: black; background: #fff; border: 1px solid #b4b4b4; font: bold 17px helvetica; padding: 0; margin-top:10px;  width: 100%; -webkit-border-radius: 8px;\"><tr style=\"color: #0000;\"><th>No.</th><th>Aircraft</th><th>Callsign</th><th>DEP</th><th>Etd</th><th>Atd</th><th>DEST</th><th>Eta</th><th>Ata</th><th></th></tr><tbody>";
+          if(pageIndexParam==0){
+            flightNumber = 1;
+          }else if(pageIndexParam>0){
+            flightNumber = (pageIndexParam*200)+1;
+          }else{
+           alert("error!");
+         }
+
+         for (var i = 0; i < result.d.FlightPlans.length; i++) {
+
+          eval("var EtdArr = new " + result.d.FlightPlans[i].Etd.split('/')[1] + ";");
+          eval("var AtdArr = new " + result.d.FlightPlans[i].Atd.split('/')[1] + ";");
+          eval("var EtaArr = new " + result.d.FlightPlans[i].Eta.split('/')[1] + ";");
+          eval("var AtaArr = new " + result.d.FlightPlans[i].Ata.split('/')[1] + ";");
+
+          window.localStorage.setItem("AircraftStorage"+flightNumber, result.d.FlightPlans[i].Aircraft);
+          window.localStorage.setItem("CallsignStorage"+flightNumber, result.d.FlightPlans[i].Callsign);
+          window.localStorage.setItem("DepStorage"+flightNumber, result.d.FlightPlans[i].DepartureAerodrome);
+          window.localStorage.setItem("EtdStorage"+flightNumber, EtdArr.toString().split(' ')[2] + "-" + EtdArr.toString().substring(16, 18) + ":" + EtdArr.toString().substring(19, 21));
+          window.localStorage.setItem("AtdStorage"+flightNumber, AtdArr.toString().split(' ')[2] + "-" + AtdArr.toString().substring(16, 18) + ":" + AtdArr.toString().substring(19, 21));
+          window.localStorage.setItem("DESTStorage"+flightNumber, result.d.FlightPlans[i].DestinationAerodrome);
+          window.localStorage.setItem("EtaStorage"+flightNumber, EtaArr.toString().split(' ')[2] + "-" + EtaArr.toString().substring(16, 18) + ":" + EtaArr.toString().substring(19, 21));
+          window.localStorage.setItem("AtaStorage"+flightNumber, AtaArr.toString().split(' ')[2] + "-" + AtaArr.toString().substring(16, 18) + ":" + AtaArr.toString().substring(19, 21));
+
+
+          mytable += "<tr><td>" + flightNumber + "</td><td>" + window.localStorage.getItem("AircraftStorage"+flightNumber) + "</td><td>" + window.localStorage.getItem("CallsignStorage"+flightNumber) + "</td><td>" + window.localStorage.getItem("DepStorage"+flightNumber) + "</td><td>" + window.localStorage.getItem("EtdStorage"+flightNumber) + "</td><td>" + window.localStorage.getItem("AtdStorage"+flightNumber) + "</td><td>" + window.localStorage.getItem("DESTStorage"+flightNumber) + "</td><td>"  + window.localStorage.getItem("EtaStorage"+flightNumber) + "</td><td>" + window.localStorage.getItem("AtaStorage"+flightNumber) + "</td><td><a onclick=\"viewFlightPlan(" + flightNumber + ")\" >view flight plan</a></td></tr>";
+
+
+          flightNumber++;
+        }
+
+        mytable += "</tbody></table>";
+
+        alert("amount of page"+AmountOfPages);
+        var Firstpage = 1;
+
+        var pageTable = "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" style=\"color: black; background: #fff; border: 1px solid #b4b4b4; font: bold 17px helvetica; padding: 0; margin-top:10px;  width: 100%; -webkit-border-radius: 8px;\"><tr style=\"color: #0000;\"><tbody><tr>";
+                for (var pageCount = 0; pageCount < AmountOfPages; pageCount++) { //class="active"
+
+                  if(pageIndexParam==pageCount){
+                    pageTable += "<td><a onclick=\"getFlightPlans(" + pageCount + ")\" class=\"active\" >" + Firstpage + "</a></td>";
+                  }
+                  else{
+                    pageTable += "<td><a onclick=\"getFlightPlans(" + pageCount + ")\" >" + Firstpage + "</a></td>";
+                  }
+                  Firstpage++;
+                }
+
+                pageTable += "</tr></tbody></table>";
+
+                document.getElementById('myPagesLinkHead').innerHTML = pageTable;
+                document.getElementById('myPagesLinkButtom').innerHTML = pageTable;
+
+
+                document.getElementById('myTable').innerHTML = mytable;
+                document.location.href = "#search-result-page";
+        }, // function
+        error: function (result, r1, r2) {
+          console.log(result);
+          alert(result.responseText);
+        }
+    }); // ajax
+}
+
+function viewFlightPlan(ID){ 
+  alert("flight ID"+ID);
+
+  document.getElementById('flightResult').innerHTML = "Aircraft: "+ window.localStorage.getItem("AircraftStorage"+ID) + "<br>Callsign: "+ window.localStorage.getItem("CallsignStorage"+ID) + "<br>DepartureAerodrome: " +window.localStorage.getItem("DepStorage"+ID) + "<br>Etd: "+ window.localStorage.getItem("EtdStorage"+ID) + "<br>Eta: "+ window.localStorage.getItem("AtdStorage"+ID) + "<br>DestinationAerodrome: "+ window.localStorage.getItem("DESTStorage"+ID) +"<br>Eta: "+ window.localStorage.getItem("EtaStorage"+ID) +"<br>Ata: "+window.localStorage.getItem("AtaStorage"+ID);
+  document.location.href = "#flight-page";
+
+}
+
+
+</script>
+</head>
+<body onload="onBodyLoad()">
+
+  <!-- page home-->
+  <div data-role="page" id="Home">
+    <div data-role="header" data-theme="b" data-position="fixed" data-tap-toggle="false">
+      <center><img src="images/logo3.png" width="169px"/></center>
+      <a href="#nav-panel-menu-homepage" data-icon="bars" data-iconpos="notext">Menu</a>
+    </div>
+    <!-- /header -->
+
+    <div data-role="content"
+    style="background-image: url('images/homepage_bg.png'); background-attachment: fixed; background-repeat: no-repeat; background-size: cover;">
+    <!--style="background-image: url('images/homepage_bg.png'); background-attachment: fixed; background-repeat: no-repeat; background-size: 100% 100%;" -->
+    <table border="0" width="70%" align="center"
+    style="margin-top:20%;  background-color:#E5E4E2; border: 16px ridge(5,10,1); table-layout:fixed">
+    <tr>
+      <td width="50%"><a href="#Flightplansearch" data-transition="flip"><img src="images/flight_history_icon.png" width="55%"></a></td><td width="50%"><a href="#" data-transition="pop"><img src="images/about_aerothai_icon.png" width="55%"></a></td>
+      </tr>
+    </table>
+  </div>
+  <!-- /content -->
+
+  <div data-role="panel" data-position-fixed="true" data-theme="a" id="nav-panel-menu-homepage">
+    <ul data-role="listview" data-theme="a" class="nav-search">
+      <p>&nbsp;</p>
+
+      <p>&nbsp;</p>
+      <li><a href="#Home">Home</a></li>
+      <li><a href="#Flightplansearch">GetFlightHistoryFlightPlans</a></li>
+    </ul>
+  </div>
+  <!-- /panel -->
+</div>
+<!-- /page home -->
+
+
+<!-- page search-->
+<div data-role="page" id="Flightplansearch">
+  <div data-theme="b" data-role="header" data-position="fixed" data-tap-toggle="false">
+    <center><img src="images/logo3.png" width="169px"/></center>
+    <a href="#nav-panel-menu-searchpage" data-icon="bars" data-iconpos="notext">Menu</a>
+    <!-- <a href="#add-form" data-icon="gear" data-iconpos="notext">Add</a> -->
+  </div>
+  <!-- /header -->
+
+  <div data-role="content">
+
+    <h3>
+      Flight History Detail Search Form
+    </h3>
+
+    <form id="formsubmit" method="POST">
+<!--       <div data-role="fieldcontain">
+
+      </div> -->
+      <div data-role="fieldcontain">
+              <label for="departureDateAndTime">
+          Date
+        </label>
+        <input name="" id="departureDateAndTime" placeholder="" onclick="getCalendar(this)" readonly="true"
+        data-mini="true">
+        <input name="" id="" placeholder="" onclick="getCalendar(this)" readonly="true"
+        data-mini="true">
+            <!--           <label for="aircraft">
+                        Aircraft
+                      </label> -->
+                      <input name="" id="aircraft" placeholder="" value="" type="hidden" data-mini="true">
+                    </div>
+                    <div data-role="fieldcontain">
+                      <label for="callsign">
+                        Call Sign
+                      </label>
+                      <input name="" id="callsign" placeholder="" value="" type="text" data-mini="true">
+                    </div>
+                    <div data-role="fieldcontain">
+                      <label for="departureAerodrome">
+                        Aerodrome
+                      </label>
+                      <input name="" id="departureAerodrome" placeholder="departure" value=""
+                      type="text" data-mini="true">
+                    </div>
+                    <div data-role="fieldcontain">
+                      <label for="depDestLinkLogic">
+                        &nbsp;
+                      </label>
+                      <select id="depDestLinkLogic" name="depDestLinkLogic" data-theme="e" data-mini="true">
+                        <option value="AND">
+                          AND
+                        </option>
+                        <option value="OR">
+                          OR
+                        </option>
+                      </select>
+                    </div>
+                    <div data-role="fieldcontain">
+                      <label for="destinationAerodrome">
+                        &nbsp;
+                      </label>
+                      <input name="" id="destinationAerodrome" placeholder="destination" value=""
+                      type="text" data-mini="true">
+                    </div>
+                    <div data-role="fieldcontain">
+            <!--           <label for="eta">
+                        eta
+                      </label> -->
+                      <input name="" id="eta" placeholder="" value="" type="hidden" data-mini="true">
+                    </div>
+                    <div data-role="fieldcontain">
+            <!--           <label for="etd">
+                        etd
+                      </label> -->
+                      <input name="" id="etd" placeholder="" value="" type="hidden" data-mini="true">
+                    </div>
+                    <div data-role="fieldcontain">
+            <!--           <label for="flightPlanType">
+                        Flight Plan Type
+                      </label> -->
+                      <input name="" id="flightPlanType" placeholder="C,E,F,R,M" value="C,E,F,R,M"
+                      type="hidden" data-mini="true">
+                    </div>
+                    <div data-role="fieldcontain">
+            <!--           <label for="flightRule">
+                        Flight Rule
+                      </label> -->
+                      <input name="" id="flightRule" placeholder="I,V,Y,Z,S,M,G,X,N" value="I,V,Y,Z,S,M,G,X,N"
+                      type="hidden" data-mini="true">
+                      <!--           <div style="float: left; width: 50px;"></div><div style="float: left; width: 110px;">*can be I, V, Y or Z</div> -->
+                    </div>
+                    <br>
+
+                    <div data-role="fieldcontain">
+            <!--           <label for="flightType">
+                        Flight Type
+                      </label> -->
+                      <input name="" id="flightType" placeholder="1,2,3,4" value="1,2,3,4" type="hidden"
+                      data-mini="true">
+                      <!--           <div style="float: left; width: 50px;"></div><div style="float: left; width: 110px;">*can be S, M, N, G or X</div> -->
+                    </div>
+                    <br>
+        <!--         <div id="checkboxes1" data-role="fieldcontain">
+                  <fieldset data-role="controlgroup" data-type="vertical" data-mini="true">
+                    <legend>
+                      Member
+                    </legend>
+                    <input id="checkbox1" name="includeMember" type="checkbox">
+                    <label for="checkbox1">
+                      Include Member
+                    </label>
+                    <input id="checkbox2" name="includeNonMember" type="checkbox">
+                    <label for="checkbox2">
+                      Include NonMember
+                    </label>
+                  </fieldset>
+                </div> -->
+                <input type="hidden" id="includeMember" value="true">
+                <input type="hidden" id="includeNonMember" value="true">
+
+                <div data-role="fieldcontain">
+            <!--           <label for="level">
+                        Level
+                      </label> -->
+                      <input name="" id="level" placeholder="" value="" type="hidden" data-mini="true">
+                    </div>
+                    <div data-role="fieldcontain">
+            <!--           <label for="registration">
+                        Registration
+                      </label> -->
+                      <input name="" id="registration" placeholder="" value="" type="hidden" data-mini="true">
+                    </div>
+                    <div data-role="fieldcontain">
+            <!--           <label for="route">
+                        Route
+                      </label> -->
+                      <input name="" id="route" placeholder="" value="" type="hidden" data-mini="true">
+                    </div>
+                    <div data-role="fieldcontain">
+            <!--           <label for="speed">
+                        Speed
+                      </label> -->
+                      <input name="" id="speed" placeholder="" value="" type="hidden" data-mini="true">
+                    </div>
+                    <div data-role="fieldcontain">
+            <!--           <label for="squawk">
+                        Squawk
+                      </label> -->
+                      <input name="" id="squawk" placeholder="" value="" type="hidden" data-mini="true">
+                    </div>
+                    <div data-role="fieldcontain">
+            <!--           <label for="pageIndex">
+                        Page Index value =0
+                      </label> -->
+                      <input name="" id="pageIndex" placeholder="" value="0" type="hidden" data-mini="true">
+                    </div>
+                    <div data-role="fieldcontain">
+            <!--           <label for="pageSize">
+                        Page Size value =9999
+                      </label> -->
+                      <input name="" id="pageSize" placeholder="9999" value="200" type="hidden"
+                      data-mini="true">
+                    </div>
+                    <div data-role="fieldcontain">
+            <!--           <label for="sortFields">
+                        Sort Fields
+                      </label> -->
+                      <input name="" id="sortFields" placeholder="callsign desc" value="CALLSIGN ASC"
+                      type="hidden">
+                    </div>
+                    <input id="invoke" type="submit" data-theme="a" data-icon="search" data-iconpos="left"
+                    value="Invoke">
+                  </form>
+                </div>
+                <!-- /content -->
+<!-- <div data-role="footer" data-position="fixed" data-theme="b">
+    <h2></h2>
+  </div> -->
+  <!-- /footer -->
+
+  <div data-role="panel" data-position-fixed="true" data-theme="a" id="nav-panel-menu-searchpage">
+    <ul data-role="listview" data-theme="a" class="nav-search">
+      <p>&nbsp;</p>
+
+      <p>&nbsp;</p>
+      <li><a href="#Home">Home</a></li>
+      <li><a href="#Flightplansearch">Flight History Detail Search</a></li>
+    </ul>
+  </div>
+  <!-- /panel -->
+
+<!--     <div data-role="panel" data-position="right" data-position-fixed="true" data-display="overlay" data-theme="b"
+         id="add-form">
+        <form class="userform">
+            <h2>Login</h2>
+            <label for="name">Username:</label>
+            <input type="text" name="name" id="name" value="" data-clear-btn="true" data-mini="true">
+            <label for="password">Password:</label>
+            <input type="password" name="password" id="password" value="" data-clear-btn="true" autocomplete="off"
+                   data-mini="true">
+
+            <div class="ui-grid-a">
+                <div class="ui-block-a"><a href="#" data-rel="close" data-role="button" data-theme="c" data-mini="true">Cancel</a>
+                </div>
+                <div class="ui-block-b"><a href="#" data-rel="close" data-role="button" data-theme="b" data-mini="true">Save</a>
+                </div>
+            </div>
+        </form>
+      </div> -->
+      <!-- /panel -->
+
+    </div>
+    <!-- /page -->
+
+
+    <!-- page search result-->
+    <div data-role="page" id="search-result-page">
+      <div data-role="header" data-theme="b" data-position="fixed" data-tap-toggle="false">
+        <a href="#Flightplansearch" data-role="button" data-inline="true" data-mini="true" data-icon="back"
+        data-iconpos="left">Back</a>
+
+        <h1>Result</h1>
+      </div>
+      <!-- /header -->
+      <div data-role="content" >
+        <!-- <div id="scrollbar1"> -->
+        <div id="myPagesLinkHead"></div>
+        <div id="myTable"></div>
+        <div id="myPagesLinkButtom"></div>
+
+        <!-- </div> /scrollbar    -->
+
+      </div>
+      <!-- /content -->
+    </div>
+    <!-- /page -->
+
+
+    <!-- page flight plan single-->
+    <div data-role="page" id="flight-page">
+      <div data-role="header" data-theme="b" data-position="fixed" data-tap-toggle="false">
+        <a href="#search-result-page" data-role="button" data-inline="true" data-mini="true" data-icon="back"
+        data-iconpos="left">Back</a>
+        <h1>Result</h1>
+      </div>
+      <!-- /header -->
+      <div data-role="content" >
+
+        <div id="flightResult"></div>
+
+      </div>
+      <!-- /content -->
+    </div>
+    <!-- /page -->
+
+  </body>
+  </html>
