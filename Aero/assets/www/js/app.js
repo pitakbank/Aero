@@ -17,20 +17,20 @@ document.addEventListener('deviceready', function() {
 /* DatePicker Plugin implementation */
 function handleDates(elm, options) {
     event.stopPropagation();
-    var elmValue = $(elm);
-    var elmValue2 = elmValue.val().toString();
-    alert("element value2 : " + elmValue2);
-    var Subdate = elmValue.substr(0, 2);
-    var SubMonth = elmValue.substr(3, 5);
-    var SubYear = elmValue.substring(6, 10);
-    var currentField = SubMonth + Subdate + SubYear;
-    alert("element value:" + currentField);
-    //var currentField = $(elm);
+    //var elmValue = $(elm);
+    //var elmValue2 = elmValue.val().toString();
+    //alert("element value2 : " + elmValue2);
+    //var Subdate = elmValue.substr(0, 2);
+    //var SubMonth = elmValue.substr(3, 5);
+    //var SubYear = elmValue.substring(6, 10);
+   // var currentField = SubMonth + Subdate + SubYear;
+   // alert("element value:" + currentField);
+    var currentField = $(elm);
     var opts = options || {};
     var minVal = opts.min || 0;
     var maxVal = opts.max || 0;
 
-    var myNewDate = Date.parse(currentField) || new Date(); //currentField.val()
+    var myNewDate = Date.parse(currentField.val()) || new Date(); //currentField.val()
     if(typeof myNewDate === "number") {
         myNewDate = new Date (myNewDate);
     }
