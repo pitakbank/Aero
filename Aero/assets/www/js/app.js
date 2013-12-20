@@ -17,31 +17,23 @@ document.addEventListener('deviceready', function() {
 /* DatePicker Plugin implementation */
 function handleDates(elm, options) {
     event.stopPropagation();
-    //var elmValue = $(elm);
-    //var elmValue2 = elmValue.val().toString();
-    //alert("element value2 : " + elmValue2);
-    //var Subdate = elmValue.substr(0, 2);
-    //var SubMonth = elmValue.substr(3, 5);
-    //var SubYear = elmValue.substring(6, 10);
-   // var currentField = SubMonth + Subdate + SubYear;
-   // alert("element value:" + currentField);
     var currentField = $(elm);
     var opts = options || {};
     var minVal = opts.min || 0;
     var maxVal = opts.max || 0;
 
-    var myNewDate = Date.parse(currentField.val()) || new Date(); //currentField.val()
-    if(typeof myNewDate === "number") {
-        myNewDate = new Date (myNewDate);
+    var myNewDate = Date.parse(currentField.val()) || new Date();
+    if (typeof myNewDate === "number") {
+        myNewDate = new Date(myNewDate);
     }
 
     window.plugins.datePicker.show({
-        date : myNewDate,
-        mode : 'date',
+        date: myNewDate,
+        mode: 'date',
         minDate: Date.parse(minVal),
         maxDate: Date.parse(maxVal)
-    }, function(returnDate) {
-        if(returnDate !== "") {
+    }, function (returnDate) {
+        if (returnDate !== "") {
             var newDate = new Date(returnDate);
             currentField.val(getFormattedDate(newDate));
         }
@@ -51,31 +43,28 @@ function handleDates(elm, options) {
 
 function getFormattedDate(date) {
     var month = date.getMonth() + 1;
-    if(month <= 9) {
-        month= "0" + month;
+    if (month <= 9) {
+        month = "0" + month;
     }
     var day = date.getDate();
-    if (day <= 9) {
-        day = "0" + day;
-    }
     var year = date.getFullYear();
-    return (day + "/" + month + "/" + year);
+    return (month + "/" + day + "/" + year);
 }
 
 function getCalendar(elm, param) {
     var minVal = 0;
     var maxVal = 0;
-    if(param === "min") {
+    if (param === "min") {
         minVal = new Date("January 1, 2013");
     }
-    if(param === "max") {
+    if (param === "max") {
         maxVal = new Date("December 31, 2015");
     }
-    if(param === "both") {
+    if (param === "both") {
         minVal = new Date("January 1, 2013");
         maxVal = new Date("December 31, 2015");
     }
-    handleDates(elm, {min: minVal, max: maxVal});
+    handleDates(elm, { min: minVal, max: maxVal });
 }
 
 function handleTime(elm) {
@@ -83,15 +72,15 @@ function handleTime(elm) {
     var time = currentField.val();
     var myNewTime = new Date();
 
-    if(time) {
+    if (time) {
         myNewTime.setHours(time.substr(0, 2));
         myNewTime.setMinutes(time.substr(3, 2));
     }
     plugins.datePicker.show({
-        date : myNewTime,
-        mode : 'time'
-    }, function(returnDate) {
-        if(returnDate !== "") {
+        date: myNewTime,
+        mode: 'time'
+    }, function (returnDate) {
+        if (returnDate !== "") {
             var newDate = new Date(returnDate);
             currentField.val(getFormattedTime(newDate));
         }
@@ -103,10 +92,10 @@ function handleTime(elm) {
 function getFormattedTime(time) {
     var hour = time.getHours();
     var minute = time.getMinutes();
-    if(hour <= 9) {
+    if (hour <= 9) {
         hour = "0" + hour;
     }
-    if(minute <= 9) {
+    if (minute <= 9) {
         minute = "0" + minute;
     }
 
@@ -116,21 +105,21 @@ function getFormattedTime(time) {
 /* End of DatePicker plugin */
 
 /* Shar plugin implementation */
-share = function(inputArray) {
+share = function (inputArray) {
     window.plugins.share.show(
         inputArray,
-        function() {}, // Success function
-        function() {alert('Share failed')} // Failure function
+        function () { }, // Success function
+        function () { alert('Share failed') } // Failure function
     );
 };
 
-shareLink = function(Urltext) {
-    var shareArr = {subject: "Share Article", text: Urltext};
+shareLink = function (Urltext) {
+    var shareArr = { subject: "Share Article", text: Urltext };
     share(shareArr);
 };
 
-sendEmail = function() {
-    var shareArr = {chooser: false, subject: "Email Subject.", text: "Test email body.", email: "bikasvaibhav@gmail.com", cc: "abc@xyz.com", type: "email"};
+sendEmail = function () {
+    var shareArr = { chooser: false, subject: "Email Subject.", text: "Test email body.", email: "bikasvaibhav@gmail.com", cc: "abc@xyz.com", type: "email" };
     share(shareArr);
 }
 

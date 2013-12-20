@@ -10,8 +10,8 @@ public class Aero extends DroidGap {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        super.setIntegerProperty("splashscreen", R.drawable.splash2);
-        super.loadUrl("file:///android_asset/www/home_v.3.0.html", 10000);
+        super.setIntegerProperty("splashscreen", R.drawable.splash2);
+        super.loadUrl("file:///android_asset/www/home_v.2.0.html", 10000);
 //        super.loadUrl("file:///android_asset/www/index_datepicker.html");
     }
 

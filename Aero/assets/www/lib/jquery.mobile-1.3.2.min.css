@@ -345,6 +345,10 @@
     background-image: -ms-linear-gradient(#f9f9f9,#eee);
     background-image: -o-linear-gradient(#f9f9f9,#eee);
     background-image: linear-gradient(#f9f9f9,#eee);
+/*    background:url(../images/homepage_bg.png);
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size: cover; */
 }
 
 .ui-overlay-c {
@@ -1142,7 +1146,7 @@ body.ui-mobile-viewport, div.ui-mobile-viewport {
 .ui-page {
     outline: 0;
     /*added*/
-    /*background: transparent url(images/homepage_bg.png) no-repeat center center;*/
+    /*background-image: url('images/homepage_bg.png'); background-attachment: fixed; background-repeat: no-repeat; background-size: 100% 100%;*/
 }
 
 @media screen and (orientation:portrait) {
