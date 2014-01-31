@@ -57,7 +57,7 @@ function onBodyLoad() {
         navigator.notification.alert('Please connect Internet!!', alertDismissed, 'No Internet Connection', 'OK');
         return false;
     }
-    
+
     document.addEventListener("deviceready", onDeviceReady, false);
 }
 
@@ -73,12 +73,6 @@ function alertDismissed() {
 $(function () {
 
     $("#formsubmit").submit(function () {
-
-        document.location.href = "#search-result-page";
-        $('#myPagesLinkHead').html('');
-        $('#myPagesLinkHead').html('<img src="images/Filling_broken_ring.gif"> loading...');
-        $("ul#flightplanlists li").remove();
-        $('#myPagesLinkButtom').html('');
 
         SinceDate = document.getElementById('SinceDate');
         UntilDate = document.getElementById('UntilDate');
@@ -141,15 +135,30 @@ $(function () {
             data: JSON.stringify(postData2),
             success: function (result) {
 
+              if(result.d == 0){
+                navigator.notification.alert('No Flight', alertDismissed, '', 'OK');
+                return false;
+              }
+              else{
+                document.location.href = "#search-result-page";
+                $('#myPagesLinkHead').html('');
+                $('#myPagesLinkHead').html('<img src="images/Filling_broken_ring.gif"> loading...');
+                $("ul#flightplanlists li").remove();
+                $('#myPagesLinkButtom').html('');
+
                 AmountOfPlans = result.d;
 
                 AmountOfPages = AmountOfPlans / 50;
 
                 getFlightPlans(1, 50);
 
+              }
+              
+
+
             },
             error: function (result) {
-                alert("error!" + result.responseText);
+                alert("error1!" + result.responseText);
             }
         }); // ajax
         return false; // ไม่ให้ form มัน load ใหม่
@@ -263,7 +272,7 @@ function getFlightPlans(startIndexParam, stopIndexParam) {
             var pageTable = "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" style=\"color: black; background: #fff; border: 1px solid #b4b4b4; font: bold 17px helvetica; padding: 0; margin-top:10px;  width: 100%; -webkit-border-radius: 8px;\"><tr style=\"color: #0000;\"><tbody><tr>";
             for (var pageCount = 0; pageCount < AmountOfPages; pageCount++) { //class="active"
 
-                pageTable += "<td><a onclick=\"getFlightPlans(" + ((pageCount * 50) + 1) + "," + ((pageCount * 50) + 50) + ")\" >" + Firstpage + "</a></td>";
+                pageTable += "<td><a onclick=\"getFlightPlans(" + ((pageCount * 50) + 1) + "," + ((pageCount * 50) + 50) + ")\" >" + Firstpage + "</a> | </td>";
                 Firstpage++;
             }
 
@@ -275,7 +284,7 @@ function getFlightPlans(startIndexParam, stopIndexParam) {
 
         }, // function
         error: function (result) {
-            alert("---error !!!!" + JSON.stringify(result));
+            alert("---error 2!!!!" + JSON.stringify(result));
             console.log(result.responseText);
         }
 
@@ -700,18 +709,17 @@ function selectAirport(icao) {
                 <input name="" id="callsign" placeholder="" value="" type="text" data-mini="true">
             </div>
 
-            <div data-role="fieldcontain">
+            <div data-role="fieldcontain"> 
+              <label for="dep">
+               Aerodrome
+              </label>
                 <table border="0">
                     <tr>
-                        <td width="75%">
-                            <label for="dep">
-                                Aerodrome
-                            </label>
+                        <td width="100%">
                             <input name="" id="dep" placeholder="departure" value="" type="text" data-mini="true">
                         </td>
 
                         <td width="25%"><!--  -->
-                            <br>
                             <input onclick="openMap('dep')" type="button" id="dep_map" data-mini="true"
                                    value="Open map">
                         </td>
@@ -734,17 +742,16 @@ function selectAirport(icao) {
             </div>
 
             <div data-role="fieldcontain">
+              <label for="dest">
+                &nbsp;
+              </label>
                 <table border="0">
                     <tr>
-                        <td width="75%">
-                            <label for="dest">
-                                &nbsp;
-                            </label>
+                        <td width="100%">
                             <input name="" id="dest" placeholder="destination" value="" type="text" data-mini="true">
                         </td>
 
                         <td width="25%"><!-- -->
-                            <br>
                             <input onclick="openMap('dest')" type="button" id="dest_map" data-mini="true"
                                    value="Open map">
                         </td>
