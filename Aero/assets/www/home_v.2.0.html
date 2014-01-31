@@ -17,6 +17,9 @@
 
   <link rel="stylesheet" href="styles/jquery.mobile.min.css"/>
   <link rel="stylesheet" href="styles/jquery.mobile.structure.min.css"/>
+
+  <script type="text/javascript" src="js/statusbarnotification.js"></script>
+
   <!-- <link rel="stylesheet" href="styles/jquery.mobile.theme.min.css"/> -->
 
   <!-- <link rel="stylesheet" href="css/website.css" type="text/css" media="screen"/> -->
@@ -67,6 +70,11 @@
     $(function () {
 
       $("#formsubmit").submit(function () {
+
+        document.location.href = "#search-result-page";
+        $('#myPagesLinkHead').html('<img src="http://preloaders.net/preloaders/287/Filling%20broken%20ring.gif"> loading...');
+        $('#myTable').html('');
+        $('#myPagesLinkButtom').html('');
 
         departureDateAndTime = document.getElementById('departureDateAndTime');
         aircraft = document.getElementById('aircraft');
@@ -126,12 +134,12 @@
         // count number of page
         $.ajax({
           type: 'POST',
-          url: 'http://172.16.21.187/FPLINet/FlightPlanServices.asmx/CountFlightHistoryFlightPlans',
+          url: 'http://172.16.21.187/fdmcwebservices/flightplanservices.asmx/CountFlightPlans',
           dataType: 'json',
           contentType: 'application/json; charset=utf-8',
           data: JSON.stringify(postData2),
           success: function (result) {
-            alert("Amount of plans" + result.d);
+            // alert("Amount of plans" + result.d);
             AmountOfPlans = result.d;
 
             AmountOfPages = AmountOfPlans/pageSize.value;
@@ -185,7 +193,7 @@ function getFlightPlans(pageIndexParam) {
     postData.pageSize = pageSize.value; // จำนวนหน้าต่อเพจ
     postData.sortFields = sortFields.value;
 
-    alert("get flight History !!!!--- date:" + dateSplit + "pageIndex:" + pageIndex);
+    // alert("get flight History !!!!--- date:" + dateSplit + "pageIndex:" + pageIndex);
 
     $.ajax({
       type: 'POST',
@@ -195,9 +203,9 @@ function getFlightPlans(pageIndexParam) {
       data: JSON.stringify(postData),
         // async: false,
         success: function (result) {
-          alert("---Succeses get flight History !!!!");
+          // alert("---Succeses get flight History !!!!");
 
-          var mytable = "Found " + AmountOfPlans + " flights<br><table border=\"1\" cellpadding=\"0\" cellspacing=\"0\" style=\"color: black; background: #fff; border: 1px solid #b4b4b4; font: bold 17px helvetica; padding: 0; margin-top:10px;  width: 100%; -webkit-border-radius: 8px;\"><tr style=\"color: #0000;\"><th>No.</th><th>Aircraft</th><th>Callsign</th><th>DEP</th><th>Etd</th><th>Atd</th><th>DEST</th><th>Eta</th><th>Ata</th><th></th></tr><tbody>";
+          var mytable = "Found " + AmountOfPlans + " flights<br><table border=\"1\"  width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"color: black; background: #fff; border: 1px solid #b4b4b4; font: bold 17px helvetica; padding: 0; margin-top:10px;  -webkit-border-radius: 8px;\"><tr style=\"color: #0000;\"><th>No.</th><th>Aircraft</th><th>Callsign</th><th>DEP</th><th>Etd</th><th>Atd</th><th>DEST</th><th>Eta</th><th>Ata</th><th></th></tr><tbody>";
           if(pageIndexParam==0){
             flightNumber = 1;
           }else if(pageIndexParam>0){
@@ -231,7 +239,7 @@ function getFlightPlans(pageIndexParam) {
 
         mytable += "</tbody></table>";
 
-        alert("amount of page"+AmountOfPages);
+        // alert("amount of page"+AmountOfPages);
         var Firstpage = 1;
 
         var pageTable = "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" style=\"color: black; background: #fff; border: 1px solid #b4b4b4; font: bold 17px helvetica; padding: 0; margin-top:10px;  width: 100%; -webkit-border-radius: 8px;\"><tr style=\"color: #0000;\"><tbody><tr>";
@@ -253,7 +261,7 @@ function getFlightPlans(pageIndexParam) {
 
 
                 document.getElementById('myTable').innerHTML = mytable;
-                document.location.href = "#search-result-page";
+                // document.location.href = "#search-result-page";
         }, // function
         error: function (result, r1, r2) {
           console.log(result);
@@ -263,11 +271,15 @@ function getFlightPlans(pageIndexParam) {
 }
 
 function viewFlightPlan(ID){ 
-  alert("flight ID"+ID);
+  // alert("flight ID"+ID);
 
-  document.getElementById('flightResult').innerHTML = "Aircraft: "+ window.localStorage.getItem("AircraftStorage"+ID) + "<br>Callsign: "+ window.localStorage.getItem("CallsignStorage"+ID) + "<br>DepartureAerodrome: " +window.localStorage.getItem("DepStorage"+ID) + "<br>Etd: "+ window.localStorage.getItem("EtdStorage"+ID) + "<br>Eta: "+ window.localStorage.getItem("AtdStorage"+ID) + "<br>DestinationAerodrome: "+ window.localStorage.getItem("DESTStorage"+ID) +"<br>Eta: "+ window.localStorage.getItem("EtaStorage"+ID) +"<br>Ata: "+window.localStorage.getItem("AtaStorage"+ID);
+  document.getElementById('flightResult').innerHTML = "Aircraft: "+ window.localStorage.getItem("AircraftStorage"+ID) + "<br>Callsign: "+ window.localStorage.getItem("CallsignStorage"+ID) + "<br>DepartureAerodrome: " +window.localStorage.getItem("DepStorage"+ID) + "<br>Etd: "+ window.localStorage.getItem("EtdStorage"+ID) + "<br>Eta: "+ window.localStorage.getItem("AtdStorage"+ID) + "<br>DestinationAerodrome: "+ window.localStorage.getItem("DESTStorage"+ID) +"<br>Eta: "+ window.localStorage.getItem("EtaStorage"+ID) +"<br>Ata: "+window.localStorage.getItem("AtaStorage"+ID) +"<br><input type=\"button\" value=\"Follow\" onclick=\"followFlight("+ID+")\" > ";
   document.location.href = "#flight-page";
 
+}
+
+function followFlight(ID){
+  window.plugins.statusBarNotification.notify("Sample Notification", "ETD:  "+ window.localStorage.getItem("EtdStorage"+ID));
 }
 
 
@@ -288,24 +300,24 @@ function viewFlightPlan(ID){
     <!--style="background-image: url('images/homepage_bg.png'); background-attachment: fixed; background-repeat: no-repeat; background-size: 100% 100%;"
     style="background-image: url('images/homepage_bg.png'); background-attachment: fixed; background-repeat: no-repeat; background-size: cover;" -->
     
-      <table border="0" width="70%" align="center" style="margin-top:20%;  background-color:#E5E4E2; border: 16px ridge(5,10,1); table-layout:fixed">
+    <table border="0" width="70%" align="center" style="margin-top:20%;  background-color:#E5E4E2; border: 16px ridge(5,10,1); table-layout:fixed">
       <tr>
         <td width="50%"><a href="#Flightplansearch" data-transition="flip"><img src="images/flight_history_icon.png" width="55%"></a></td><td width="50%"><a href="#" data-transition="pop"><img src="images/about_aerothai_icon.png" width="55%"></a></td>
       </tr>
-  </table>
-</div>
-<!-- /content -->
+    </table>
+  </div>
+  <!-- /content -->
 
-<div data-role="panel" data-position-fixed="true" data-theme="a" id="nav-panel-menu-homepage">
-  <ul data-role="listview" data-theme="a" class="nav-search">
-    <p>&nbsp;</p>
+  <div data-role="panel" data-position-fixed="true" data-theme="a" id="nav-panel-menu-homepage">
+    <ul data-role="listview" data-theme="a" class="nav-search">
+      <p>&nbsp;</p>
 
-    <p>&nbsp;</p>
-    <li><a href="#Home">Home</a></li>
-    <li><a href="#Flightplansearch">GetFlightHistoryFlightPlans</a></li>
-  </ul>
-</div>
-<!-- /panel -->
+      <p>&nbsp;</p>
+      <li><a href="#Home">Home</a></li>
+      <li><a href="#Flightplansearch">GetFlightHistoryFlightPlans</a></li>
+    </ul>
+  </div>
+  <!-- /panel -->
 </div>
 <!-- /page home -->
 
@@ -333,157 +345,142 @@ function viewFlightPlan(ID){
         <input name="" id="departureDateAndTime" placeholder="" onclick="getCalendar(this)" readonly="true"
         data-mini="true">
       </div>
-      <div data-role="fieldcontain">
+      <!-- <div data-role="fieldcontain"> -->
 
             <!--           <label for="aircraft">
                         Aircraft
                       </label> -->
                       <input name="" id="aircraft" placeholder="" value="" type="hidden" data-mini="true">
-                    </div>
-                    <div data-role="fieldcontain">
-                      <label for="callsign">
-                        Call Sign
-                      </label>
-                      <input name="" id="callsign" placeholder="" value="" type="text" data-mini="true">
-                    </div>
-                    <div data-role="fieldcontain">
-                      <label for="departureAerodrome">
-                        Aerodrome
-                      </label>
-                      <input name="" id="departureAerodrome" placeholder="departure" value=""
-                      type="text" data-mini="true">
-                    </div>
-                    <div data-role="fieldcontain">
-                      <label for="depDestLinkLogic">
-                        &nbsp;
-                      </label>
-                      <select id="depDestLinkLogic" name="depDestLinkLogic" data-theme="e" data-mini="true">
-                        <option value="AND">
-                          AND
-                        </option>
-                        <option value="OR">
-                          OR
-                        </option>
-                      </select>
-                    </div>
-                    <div data-role="fieldcontain">
-                      <label for="destinationAerodrome">
-                        &nbsp;
-                      </label>
-                      <input name="" id="destinationAerodrome" placeholder="destination" value=""
-                      type="text" data-mini="true">
-                    </div>
-                    <div data-role="fieldcontain">
+                      <!-- </div> -->
+                      <div data-role="fieldcontain">
+                        <label for="callsign">
+                          Call Sign
+                        </label>
+                        <input name="" id="callsign" placeholder="" value="" type="text" data-mini="true">
+                      </div>
+                      <div data-role="fieldcontain">
+                        <label for="departureAerodrome">
+                          Aerodrome
+                        </label>
+                        <input name="" id="departureAerodrome" placeholder="departure" value=""
+                        type="text" data-mini="true">
+                      </div>
+                      <div data-role="fieldcontain">
+                        <label for="depDestLinkLogic">
+                          &nbsp;
+                        </label>
+                        <select id="depDestLinkLogic" name="depDestLinkLogic" data-theme="e" data-mini="true">
+                          <option value="AND">
+                            AND
+                          </option>
+                          <option value="OR">
+                            OR
+                          </option>
+                        </select>
+                      </div>
+                      <div data-role="fieldcontain">
+                        <label for="destinationAerodrome">
+                          &nbsp;
+                        </label>
+                        <input name="" id="destinationAerodrome" placeholder="destination" value=""
+                        type="text" data-mini="true">
+                      </div>
+                      <!-- <div data-role="fieldcontain"> -->
             <!--           <label for="eta">
                         eta
                       </label> -->
                       <input name="" id="eta" placeholder="" value="" type="hidden" data-mini="true">
-                    </div>
-                    <div data-role="fieldcontain">
+                      <!-- </div> -->
+                      <!-- <div data-role="fieldcontain"> -->
             <!--           <label for="etd">
                         etd
                       </label> -->
                       <input name="" id="etd" placeholder="" value="" type="hidden" data-mini="true">
-                    </div>
-                    <div data-role="fieldcontain">
+                      <!-- </div> -->
+                      <!-- <div data-role="fieldcontain"> -->
             <!--           <label for="flightPlanType">
                         Flight Plan Type
                       </label> -->
                       <input name="" id="flightPlanType" placeholder="C,E,F,R,M" value="C,E,F,R,M"
                       type="hidden" data-mini="true">
-                    </div>
-                    <div data-role="fieldcontain">
+                      <!-- </div> -->
+                      <!-- <div data-role="fieldcontain"> -->
             <!--           <label for="flightRule">
                         Flight Rule
                       </label> -->
                       <input name="" id="flightRule" placeholder="I,V,Y,Z,S,M,G,X,N" value="I,V,Y,Z,S,M,G,X,N"
                       type="hidden" data-mini="true">
                       <!--           <div style="float: left; width: 50px;"></div><div style="float: left; width: 110px;">*can be I, V, Y or Z</div> -->
-                    </div>
-                    <br>
+                      <!-- </div> -->
+                      <!-- <br> -->
 
-                    <div data-role="fieldcontain">
+                      <!-- <div data-role="fieldcontain"> -->
             <!--           <label for="flightType">
                         Flight Type
                       </label> -->
                       <input name="" id="flightType" placeholder="1,2,3,4" value="1,2,3,4" type="hidden"
                       data-mini="true">
                       <!--           <div style="float: left; width: 50px;"></div><div style="float: left; width: 110px;">*can be S, M, N, G or X</div> -->
-                    </div>
-                    <br>
-        <!--         <div id="checkboxes1" data-role="fieldcontain">
-                  <fieldset data-role="controlgroup" data-type="vertical" data-mini="true">
-                    <legend>
-                      Member
-                    </legend>
-                    <input id="checkbox1" name="includeMember" type="checkbox">
-                    <label for="checkbox1">
-                      Include Member
-                    </label>
-                    <input id="checkbox2" name="includeNonMember" type="checkbox">
-                    <label for="checkbox2">
-                      Include NonMember
-                    </label>
-                  </fieldset>
-                </div> -->
-                <input type="hidden" id="includeMember" value="true">
-                <input type="hidden" id="includeNonMember" value="true">
+                      <!-- </div> -->
+                      <!-- <br> -->
+                      <input type="hidden" id="includeMember" value="true">
+                      <input type="hidden" id="includeNonMember" value="true">
 
-                <div data-role="fieldcontain">
+                      <!-- <div data-role="fieldcontain"> -->
             <!--           <label for="level">
                         Level
                       </label> -->
                       <input name="" id="level" placeholder="" value="" type="hidden" data-mini="true">
-                    </div>
-                    <div data-role="fieldcontain">
+                      <!-- </div> -->
+                      <!-- <div data-role="fieldcontain"> -->
             <!--           <label for="registration">
                         Registration
                       </label> -->
                       <input name="" id="registration" placeholder="" value="" type="hidden" data-mini="true">
-                    </div>
-                    <div data-role="fieldcontain">
+                      <!-- </div> -->
+                      <!-- <div data-role="fieldcontain"> -->
             <!--           <label for="route">
                         Route
                       </label> -->
                       <input name="" id="route" placeholder="" value="" type="hidden" data-mini="true">
-                    </div>
-                    <div data-role="fieldcontain">
+                      <!-- </div> -->
+                      <!-- <div data-role="fieldcontain"> -->
             <!--           <label for="speed">
                         Speed
                       </label> -->
                       <input name="" id="speed" placeholder="" value="" type="hidden" data-mini="true">
-                    </div>
-                    <div data-role="fieldcontain">
+                      <!-- </div> -->
+                      <!-- <div data-role="fieldcontain"> -->
             <!--           <label for="squawk">
                         Squawk
                       </label> -->
                       <input name="" id="squawk" placeholder="" value="" type="hidden" data-mini="true">
-                    </div>
-                    <div data-role="fieldcontain">
+                      <!-- </div> -->
+                      <!-- <div data-role="fieldcontain"> -->
             <!--           <label for="pageIndex">
                         Page Index value =0
                       </label> -->
                       <input name="" id="pageIndex" placeholder="" value="0" type="hidden" data-mini="true">
-                    </div>
-                    <div data-role="fieldcontain">
+                      <!-- </div> -->
+                      <!-- <div data-role="fieldcontain"> -->
             <!--           <label for="pageSize">
                         Page Size value =9999
                       </label> -->
                       <input name="" id="pageSize" value="200" type="hidden"
                       data-mini="true">
-                    </div>
-                    <div data-role="fieldcontain">
+                      <!-- </div> -->
+                      <!-- <div data-role="fieldcontain"> -->
             <!--           <label for="sortFields">
                         Sort Fields
                       </label> -->
                       <input name="" id="sortFields" placeholder="callsign desc" value="CALLSIGN ASC"
                       type="hidden">
-                    </div>
-                    <input id="invoke" type="submit" data-theme="a" data-icon="search" data-iconpos="left"
-                    value="Invoke">
-                  </form>
-                </div>
-                <!-- /content -->
+                      <!-- </div> -->
+                      <input id="invoke" type="submit" data-theme="a" data-icon="search" data-iconpos="left"
+                      value="Invoke">
+                    </form>
+                  </div>
+                  <!-- /content -->
 <!-- <div data-role="footer" data-position="fixed" data-theme="b">
     <h2></h2>
   </div> -->
@@ -535,7 +532,7 @@ function viewFlightPlan(ID){
       <!-- /header -->
       <div data-role="content" >
         <!-- <div id="scrollbar1"> -->
-        <div id="myPagesLinkHead"></div>
+        <div id="myPagesLinkHead" align="center" ></div>
         <div id="myTable"></div>
         <div id="myPagesLinkButtom"></div>
 

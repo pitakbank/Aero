@@ -43,7 +43,7 @@
       <preference name="InAppBrowserStorageEnabled" value="true" />
       <preference name="disallowOverscroll" value="true" />
     -->
-
+	<feature name="http://api.phonegap.com/1.0/network"/>
     <feature name="App">
       <param name="android-package" value="org.apache.cordova.App"/>
     </feature>
@@ -104,5 +104,8 @@
     <!-- Deprecated plugins element. Remove in 3.0 -->
     <plugins>
     <plugin name="DatePickerPlugin" value="com.bikasv.plugins.datepicker.DatePickerPlugin"/>
+    <plugin name="StatusBarNotification" value="com.plugin.cordova.StatusBarNotification"/>
+    <plugin name="BackgroundServicePlugin" value="com.red_folder.phonegap.plugin.backgroundservice.BackgroundServicePlugin"/>
     </plugins>
+    
 </widget>
