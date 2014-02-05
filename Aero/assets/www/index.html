@@ -1,0 +1,866 @@
+<html>
+<head>
+<title>AEROTHAI</title>
+<meta http-equiv='Content-Type' content='text/html; charset=utf-8'/>
+<script src="cordova.js"></script>
+<script type="text/javascript" src="js/app.js"></script>
+<script src="js/datePickerPlugin.js"></script>
+<script type="text/javascript" src="js/statusbarnotification.js"></script>
+<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+<link href="http://code.google.com/apis/maps/documentation/javascript/examples/default.css" rel="stylesheet"
+      type="text/css"/>
+<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.0/jquery.mobile-1.4.0.min.css"/>
+<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+<script src="http://code.jquery.com/mobile/1.4.0/jquery.mobile-1.4.0.min.js"></script>
+
+<style type="text/css">
+    #map_canvas_id {
+        padding: 0;
+        position: absolute !important;
+        top: 40px !important;
+        right: 0;
+        bottom: 0px !important;
+        left: 0 !important;
+    }
+</style>
+
+<script>
+var SinceDate;
+var UntilDate;
+var aircraft;
+var callsign;
+var dep;
+var depDestLink;
+var dest;
+var fplType;
+var flightRule;
+var flightType;
+var flightLevel;
+var reg;
+var route;
+var speed;
+var squawk;
+var startIndex;
+var stopIndex;
+var sort;
+var AmountOfPlans = 0;
+var AmountOfPages = 0;
+var flightNumber = 0;
+
+var IDArr = new Array();
+
+var NewATD;
+
+function onBodyLoad() {
+  var networkState = navigator.connection.type;
+    if (networkState == Connection.NONE){
+        navigator.notification.alert('Please connect Internet!!', alertDismissed, 'No Internet Connection', 'OK');
+        return false;
+    }
+
+    document.addEventListener("deviceready", onDeviceReady, false);
+}
+
+function onDeviceReady() {
+    navigator.splashscreen.hide();
+}
+
+// alert dialog dismissed
+function alertDismissed() {
+    // do something
+}
+
+function backToSearchForm(){
+  document.location.href = "#Flightplansearch";
+}
+
+$(function () {
+
+    $("#formsubmit").submit(function () {
+
+      document.location.href = "#search-result-page";
+      $('#myPagesLinkHead').html('');
+      $('#myPagesLinkHead').html('<img src="images/Filling_broken_ring.gif"> loading...');
+      $("ul#flightplanlists li").remove();
+      $('#myPagesLinkButtom').html('');
+
+        SinceDate = document.getElementById('SinceDate');
+        UntilDate = document.getElementById('UntilDate');
+        aircraft = document.getElementById('aircraft');
+        callsign = document.getElementById('callsign');
+        dep = document.getElementById('dep');
+        depDestLink = $("#depDestLink").val();
+        dest = document.getElementById('dest');
+        fplType = document.getElementById('fplType');
+        flightRule = document.getElementById('flightRule');
+        flightType = document.getElementById('flightType');
+        flightLevel = document.getElementById('flightLevel');
+        reg = document.getElementById('reg');
+        route = document.getElementById('route');
+        speed = document.getElementById('speed');
+        squawk = document.getElementById('squawk');
+
+        var dateSinceDateSplit = SinceDate.value.split('/');
+        var yearS = dateSinceDateSplit[2];
+        var monthS = dateSinceDateSplit[0];
+        var dayS = dateSinceDateSplit[1];
+        if (parseFloat(dayS) < 10) {
+            dayS = "0" + dayS;
+        }
+
+        if (UntilDate.value == "") {
+            yearU = yearS;
+            monthU = monthS;
+            dayU = dayS;
+        } else {
+            var dateUntilDateSplit = UntilDate.value.split('/');
+            var yearU = dateUntilDateSplit[2];
+            var monthU = dateUntilDateSplit[0];
+            var dayU = dateUntilDateSplit[1];
+        }
+
+        var postData2 = new Object();
+        postData2.since = yearS + monthS + dayS;
+        postData2.until = yearU + monthU + dayU;
+        postData2.aircraft = aircraft.value;
+        postData2.callsign = callsign.value;
+        postData2.dep = dep.value;
+        postData2.depDestLink = depDestLink;
+        postData2.dest = dest.value;
+        postData2.fplType = fplType.value;
+        postData2.flightRule = flightRule.value;
+        postData2.flightType = flightType.value;
+        postData2.flightLevel = flightLevel.value;
+        postData2.reg = reg.value;
+        postData2.route = route.value;
+        postData2.speed = speed.value;
+        postData2.squawk = squawk.value;
+
+        // count number of page
+        $.ajax({
+            type: 'POST',
+            url: 'http://172.16.21.187/fdmcwebservices/flightplanservices.asmx/CountFlightPlans',
+            dataType: 'json',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(postData2),
+            success: function (result) {
+
+              if(result.d == 0){
+                navigator.notification.alert('No Flight', backToSearchForm, '', 'OK');
+                return false;
+              }
+              else{
+
+                AmountOfPlans = result.d;
+
+                AmountOfPages = AmountOfPlans / 50;
+
+                getFlightPlans(1, 50);
+
+              }
+              
+
+
+            },
+            error: function (result) {
+                alert("error1!" + result.responseText);
+                document.location.href = "#Flightplansearch";
+            }
+        }); // ajax
+        return false; // ไม่ให้ form มัน load ใหม่
+
+    }); //post form
+
+}); //function
+
+function getFlightPlans(startIndexParam, stopIndexParam) {
+    $('#myPagesLinkHead').html('');
+    $('#myPagesLinkHead').html('<img src="images/Filling_broken_ring.gif"> loading...');
+    $("ul#flightplanlists li").remove();
+    $('#myPagesLinkButtom').html('');
+
+    sort = document.getElementById('sort');
+
+    var dateSinceDateSplit = SinceDate.value.split('/');
+    var yearS = dateSinceDateSplit[2];
+    var monthS = dateSinceDateSplit[0];
+    var dayS = dateSinceDateSplit[1];
+    if (parseFloat(dayS) < 10) {
+        dayS = "0" + dayS;
+    }
+
+    if (UntilDate.value == "") {
+        yearU = yearS;
+        monthU = monthS;
+        dayU = dayS;
+    } else {
+        var dateUntilDateSplit = UntilDate.value.split('/');
+        var yearU = dateUntilDateSplit[2];
+        var monthU = dateUntilDateSplit[0];
+        var dayU = dateUntilDateSplit[1];
+    }
+
+    var postData = new Object();
+    postData.since = yearS + monthS + dayS;
+    postData.until = yearU + monthU + dayU;
+    postData.aircraft = aircraft.value;
+    postData.callsign = callsign.value;
+    postData.dep = dep.value;
+    postData.depDestLink = depDestLink;
+    postData.dest = dest.value;
+    postData.fplType = fplType.value;
+    postData.flightRule = flightRule.value;
+    postData.flightType = flightType.value;
+    postData.flightLevel = flightLevel.value;
+    postData.reg = reg.value;
+    postData.route = route.value;
+    postData.speed = speed.value;
+    postData.squawk = squawk.value;
+    postData.startIndex = startIndexParam;
+    postData.stopIndex = stopIndexParam;
+    postData.sort = sort.value;
+
+    $.ajax({
+        type: 'POST',
+        url: 'http://172.16.21.187/fdmcwebservices/flightplanservices.asmx/GetFlightPlansWithoutRoute',
+        dataType: 'json',
+        contentType: 'application/json; charset=utf-8',
+        data: JSON.stringify(postData),
+        success: function (result) {
+
+            if (startIndexParam == 0) {
+                flightNumber = 1;
+            } else {
+                flightNumber = startIndexParam;
+            }
+
+            for (var i = 0; i < result.d.FlightPlans.length; i++) {
+
+                eval("var EtdArr = new " + result.d.FlightPlans[i].Etd.split('/')[1] + ";");
+                eval("var AtdArr = new " + result.d.FlightPlans[i].Atd.split('/')[1] + ";");
+                eval("var EtaArr = new " + result.d.FlightPlans[i].Eta.split('/')[1] + ";");
+                eval("var AtaArr = new " + result.d.FlightPlans[i].Ata.split('/')[1] + ";");
+
+                window.localStorage.setItem("AircraftStorage" + flightNumber, result.d.FlightPlans[i].Aircraft);
+                window.localStorage.setItem("CallsignStorage" + flightNumber, result.d.FlightPlans[i].Callsign);
+                window.localStorage.setItem("DepStorage" + flightNumber, result.d.FlightPlans[i].DepartureAerodrome);
+                window.localStorage.setItem("EtdStorage" + flightNumber, EtdArr.toString().split(' ')[2] + "-" + EtdArr.toString().substring(16, 18) + ":" + EtdArr.toString().substring(19, 21));
+                window.localStorage.setItem("AtdStorage" + flightNumber, AtdArr.toString().split(' ')[2] + "-" + AtdArr.toString().substring(16, 18) + ":" + AtdArr.toString().substring(19, 21));
+                window.localStorage.setItem("DESTStorage" + flightNumber, result.d.FlightPlans[i].DestinationAerodrome);
+                window.localStorage.setItem("EtaStorage" + flightNumber, EtaArr.toString().split(' ')[2] + "-" + EtaArr.toString().substring(16, 18) + ":" + EtaArr.toString().substring(19, 21));
+                window.localStorage.setItem("AtaStorage" + flightNumber, AtaArr.toString().split(' ')[2] + "-" + AtaArr.toString().substring(16, 18) + ":" + AtaArr.toString().substring(19, 21));
+
+                //store year of ata and atd
+                window.localStorage.setItem("ATDStorage" + flightNumber, AtdArr.toString().split(' ')[3]);
+                window.localStorage.setItem("ATAStorage" + flightNumber, AtaArr.toString().split(' ')[3]);
+
+                if ((parseFloat(window.localStorage.getItem("ATDStorage" + flightNumber)) <= 2000) && (parseFloat(window.localStorage.getItem("ATAStorage" + flightNumber)) <= 2000)) { // not show atd ata
+                    $("ul#flightplanlists").append('<li><a onclick=\"viewFlightPlan(' + flightNumber + ')\"><h2>' + flightNumber + '  Aircraft: ' + window.localStorage.getItem("AircraftStorage" + flightNumber) + '        Callsign: ' + window.localStorage.getItem("CallsignStorage" + flightNumber) + '</h2><p>' + window.localStorage.getItem("DepStorage" + flightNumber) + '  ' + window.localStorage.getItem("EtdStorage" + flightNumber) + ' -> ' + window.localStorage.getItem("DESTStorage" + flightNumber) + '  ' + window.localStorage.getItem("EtaStorage" + flightNumber) + '</p></a></li> ');
+                }
+                else if ((parseFloat(window.localStorage.getItem("ATDStorage" + flightNumber)) <= 2000)) {
+                    $("ul#flightplanlists").append('<li><a onclick=\"viewFlightPlan(' + flightNumber + ')\"><h2>' + flightNumber + '  Aircraft: ' + window.localStorage.getItem("AircraftStorage" + flightNumber) + '        Callsign: ' + window.localStorage.getItem("CallsignStorage" + flightNumber) + '</h2><p>' + window.localStorage.getItem("DepStorage" + flightNumber) + '  ' + window.localStorage.getItem("EtdStorage" + flightNumber) + ' -> ' + window.localStorage.getItem("DESTStorage" + flightNumber) + '  ' + window.localStorage.getItem("EtaStorage" + flightNumber) + '  <font color="green">(' + window.localStorage.getItem("AtaStorage" + flightNumber) + ')</p></a></li> ');
+                } else if ((parseFloat(window.localStorage.getItem("ATAStorage" + flightNumber)) <= 2000)) {
+                    $("ul#flightplanlists").append('<li><a onclick=\"viewFlightPlan(' + flightNumber + ')\"><h2>' + flightNumber + '  Aircraft: ' + window.localStorage.getItem("AircraftStorage" + flightNumber) + '        Callsign: ' + window.localStorage.getItem("CallsignStorage" + flightNumber) + '</h2><p>' + window.localStorage.getItem("DepStorage" + flightNumber) + '  ' + window.localStorage.getItem("EtdStorage" + flightNumber) + '   <font color="green">(' + window.localStorage.getItem("AtdStorage" + flightNumber) + ')</font> -> ' + window.localStorage.getItem("DESTStorage" + flightNumber) + '  ' + window.localStorage.getItem("EtaStorage" + flightNumber) + '</p></a></li> ');
+                } else {
+                    $("ul#flightplanlists").append('<li><a onclick=\"viewFlightPlan(' + flightNumber + ')\"><h2>' + flightNumber + '  Aircraft: ' + window.localStorage.getItem("AircraftStorage" + flightNumber) + '        Callsign: ' + window.localStorage.getItem("CallsignStorage" + flightNumber) + '</h2><p>' + window.localStorage.getItem("DepStorage" + flightNumber) + '  ' + window.localStorage.getItem("EtdStorage" + flightNumber) + '   <font color="green">(' + window.localStorage.getItem("AtdStorage" + flightNumber) + ')</font> -> ' + window.localStorage.getItem("DESTStorage" + flightNumber) + '  ' + window.localStorage.getItem("EtaStorage" + flightNumber) + '  <font color="green">(' + window.localStorage.getItem("AtaStorage" + flightNumber) + ')</p></a></li> ');
+                }
+
+
+// check ata , atd
+
+                flightNumber++;
+            }
+
+            $('ul#flightplanlists').listview('refresh');
+
+            var Firstpage = 1;
+
+            var pageTable = "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" style=\"color: black; background: #fff; border: 1px solid #b4b4b4; font: bold 17px helvetica; padding: 0; margin-top:10px;  width: 100%; -webkit-border-radius: 8px;\"><tr style=\"color: #0000;\"><tbody><tr>";
+            for (var pageCount = 0; pageCount < AmountOfPages; pageCount++) { //class="active"
+
+                pageTable += "<td>| <a onclick=\"getFlightPlans(" + ((pageCount * 50) + 1) + "," + ((pageCount * 50) + 50) + ")\" >" + Firstpage + "</a>  |</td>";
+                Firstpage++;
+            }
+
+            pageTable += "</tr></tbody></table>";
+
+            document.getElementById('myPagesLinkHead').innerHTML = pageTable;
+            document.getElementById('myPagesLinkButtom').innerHTML = pageTable;
+            document.getElementById('flightResult').innerHTML = '';
+
+        }, // function
+        error: function (result) {
+            alert("---error 2!!!!" + JSON.stringify(result));
+            console.log(result.responseText);
+        }
+
+    }); // ajax
+
+} // function
+
+var ATD;
+var ATA;
+
+function viewFlightPlan(ID) {
+
+    $('#flightResult').html('');
+
+    if ((parseFloat(window.localStorage.getItem("ATDStorage" + ID)) <= 2000) && (parseFloat(window.localStorage.getItem("ATAStorage" + ID)) <= 2000)) { // not show atd ata
+        ATA = "-";
+        ATD = "-";
+    }
+    else if ((parseFloat(window.localStorage.getItem("ATDStorage" + ID)) <= 2000)) {
+        ATA = "<font color=\"green\">" + window.localStorage.getItem("AtaStorage" + ID) + "</font>";
+        ATD = "-";
+    } else if ((parseFloat(window.localStorage.getItem("ATAStorage" + ID)) <= 2000)) {
+        ATA = "";
+        ATD = "<font color=\"green\">" + window.localStorage.getItem("AtdStorage" + ID) + "</font>";
+    } else {
+        ATA = "<font color=\"green\">" + window.localStorage.getItem("AtaStorage" + ID) + "</font>";
+        ATD = "<font color=\"green\">" + window.localStorage.getItem("AtdStorage" + ID) + "</font>";
+    }
+
+    document.getElementById('flightResult').innerHTML = "<table border=\"0\"><tr><td>Aircraft: </td><td>" + window.localStorage.getItem("AircraftStorage" + ID) + "</td></tr><tr><td>Callsign: </td><td>" + window.localStorage.getItem("CallsignStorage" + ID) + "</td></tr><tr><td>Departure: </td><td>" + window.localStorage.getItem("DepStorage" + ID) + "</td></tr><tr><td>Etd: </td><td>" + window.localStorage.getItem("EtdStorage" + ID) + "</td></tr><tr><td>Atd: </td><td>" + ATD + "</td><tr><td>Destination: </td><td>" + window.localStorage.getItem("DESTStorage" + ID) + "</td></tr><tr><td>Eta: </td><td>" + window.localStorage.getItem("EtaStorage" + ID) + "</td></tr><tr><td>Ata: </td><td>" + ATA + "</td></tr></table><br><input type=\"button\" id=\"btFollow" + ID + "\" value=\"Follow this flight\" onclick=\"followFlight(" + ID + ")\" style=\"background-color: #C0C0C0;\"/>";
+    document.location.href = "#flight-page";
+// check eta
+
+}
+
+var FlightFollowId = new Array();
+var FlightFollow_cond_atd = new Array();
+
+function UnfollowFlight(ID) {
+    window.clearInterval(FlightFollowId[ID]);
+    $("#btFollow" + ID).val("Follow this flight!");
+    // $("#btFollow" + ID).attr('style','background-color: #C0C0C0;');
+    $("#btFollow" + ID).attr('onclick', 'followFlight(' + ID + ')');
+    navigator.notification.alert('Flight is unfollow!!', alertDismissed, 'Unfollow', 'OK');
+    return false;
+}
+
+var etdRealMinutes = 0;
+var diff_OnehourMinute_2 = 0;
+
+var etaRealMinutes = 0;
+var diff_eta_OnehourMinute_2 = 0;
+
+function followFlight(ID) {
+
+    var currentdate = new Date();
+
+    var etaStrTime = window.localStorage.getItem("EtaStorage" + ID);
+    var etaDate = etaStrTime.toString().substring(0, 2);
+    var etahours = etaStrTime.toString().substring(3, 5);
+    var etaMinute = etaStrTime.toString().substring(6, 8);
+
+    if ((currentdate.getDate() > etaDate )) {
+        alert("Flight is departed !");
+    }
+    else if ((currentdate.getDate() == etaDate ) && (currentdate.getHours() > etahours)) {
+        alert("Flight is departed !");
+    }
+    else if ((currentdate.getDate() == etaDate ) && (currentdate.getHours() == etahours) && (currentdate.getMinutes > etaMinute)) {
+        alert("Flight is departed !");
+    }
+    else {
+        $("#btFollow" + ID).val("Unfollow!");
+        // $("#btFollow" + ID).attr('style','background-color: ##57A957;');
+        $("#btFollow" + ID).attr('onclick', 'UnfollowFlight(' + ID + ')');
+        navigator.notification.alert('You are following this flight!', alertDismissed, 'Followed', 'Done');
+
+        FlightFollowId[ID] = setInterval(function () {
+
+            var currentdate = new Date();
+            var etdStrTime = window.localStorage.getItem("EtdStorage" + ID);
+            var etdDate = etdStrTime.toString().substring(0, 2);
+            var etdhours = etdStrTime.toString().substring(3, 5);
+            var etdMinute = etdStrTime.toString().substring(6, 8);
+
+            //make etd minute to 60 if it is 0 minute
+            if ((etdMinute >= 0) && (etdMinute <= 9)) {
+                etdRealMinutes = 60 + parseFloat(etdMinute);
+                diff_OnehourMinute_2 = etdRealMinutes - currentdate.getMinutes();
+            }
+
+            var diff_etd_OneHour = etdhours - currentdate.getHours();
+            var diff_etd_tenMinutes = etdMinute - currentdate.getMinutes();
+
+            // checking flight will depart in 1 hour
+            if ((etdDate == currentdate.getDate()) && (diff_etd_OneHour == 1 ) && (diff_etd_tenMinutes == 0)) {
+                window.plugins.statusBarNotification.notify("Flight will depart in 1 hour.", "Callsign: " + window.localStorage.getItem("CallsignStorage" + ID) + "   ETD:  " + window.localStorage.getItem("EtdStorage" + ID));
+                return false;
+            }
+
+            //checking flight will depart in 10 minutes
+            else if ((etdDate >= currentdate.getDate()) && (diff_etd_OneHour <= 1 ) && ((diff_etd_tenMinutes == 11) || (diff_OnehourMinute_2 == 11))) {
+
+                //if atd is avaliable
+                getATD(window.localStorage.getItem("AircraftStorage" + ID), window.localStorage.getItem("CallsignStorage" + ID), window.localStorage.getItem("DepStorage" + ID), window.localStorage.getItem("DESTStorage" + ID));
+
+                if (( (window.localStorage.getItem("DepStorage" + ID).toString().substring(0, 2) == "VT") || (window.localStorage.getItem("DESTStorage" + ID).toString().substring(0, 2) == "VT") ) && ( parseFloat(window.localStorage.getItem("NewATD" + window.localStorage.getItem("AircraftStorage" + ID) + window.localStorage.getItem("CallsignStorage" + ID) + window.localStorage.getItem("DepStorage" + ID) + window.localStorage.getItem("DESTStorage" + ID))) > 2000 )) {
+                    checkAtdInterval(ID, window.localStorage.getItem("AircraftStorage" + ID), window.localStorage.getItem("CallsignStorage" + ID), window.localStorage.getItem("DepStorage" + ID), window.localStorage.getItem("DESTStorage" + ID));
+                }
+
+            }
+
+            // start checking eta arrive
+            var etaStrTime = window.localStorage.getItem("EtaStorage" + ID);
+            var etaDate = etaStrTime.toString().substring(0, 2);
+            var etahours = etaStrTime.toString().substring(3, 5);
+            var etaMinute = etaStrTime.toString().substring(6, 8);
+            var diff_eta_OnehourHour = etahours - currentdate.getHours();
+            var diff_eta_OnehourMinute = etaMinute - currentdate.getMinutes();
+            //convert eta mminute
+            if ((etaMinute >= 0) && (etaMinute <= 9)) {
+                etaRealMinutes = 60 + parseFloat(etaMinute);
+                diff_eta_OnehourMinute_2 = etaRealMinutes - currentdate.getMinutes();
+            }
+
+            //flight arrive in 1 hour
+            if ((etaDate == currentdate.getDate()) && (diff_eta_OnehourHour == 1 ) && (diff_eta_OnehourMinute == 0)) {
+                window.plugins.statusBarNotification.notify("Flight will arrive in 1 hour.", "Callsign: " + window.localStorage.getItem("CallsignStorage" + ID) + "   ETA:  " + window.localStorage.getItem("EtaStorage" + ID));
+                return false;
+            }
+
+            //flight arrive in 10 minutes
+            else if ((etaDate >= currentdate.getDate()) && (diff_eta_OnehourHour <= 1 ) && ((diff_eta_OnehourMinute == 10) || (diff_eta_OnehourMinute_2 == 10))) {
+                window.plugins.statusBarNotification.notify("Flight will arrive in 10 minutes.", "Callsign: " + window.localStorage.getItem("CallsignStorage" + ID) + "   ETA:  " + window.localStorage.getItem("EtaStorage" + ID));
+                return false;
+            }
+
+            //flight arrived
+            else if ((etaDate >= currentdate.getDate()) && (currentdate.getHours() == etahours) && (currentdate.getMinutes() == etaMinute )) {
+                UnfollowFlight(ID); //unfollow
+                window.plugins.statusBarNotification.notify("Flight is arrived!", "Callsign: " + window.localStorage.getItem("CallsignStorage" + ID) + "   ETA:  " + window.localStorage.getItem("EtaStorage" + ID));
+                return false;
+            }
+
+        }, 60000); //setInterval
+
+    } //else
+
+}//end function
+
+var diff_atd_OnehourMinute_2;
+var atdRealMinutes;
+
+function checkAtdInterval(ID, aircraft, callsign, dep, dest) {
+    alert("checkingATD function");
+
+    FlightFollow_cond_atd[ID] = setInterval(function () {
+
+        getATD(aircraft, callsign, dep, dest);
+
+        NewATD = window.localStorage.getItem("NewATD" + window.localStorage.getItem("AircraftStorage" + ID) + window.localStorage.getItem("CallsignStorage" + ID) + window.localStorage.getItem("DepStorage" + ID) + window.localStorage.getItem("DESTStorage" + ID));
+
+        var newATDstr = window.localStorage.getItem("New_AtdStorage" + window.localStorage.getItem("AircraftStorage" + ID) + window.localStorage.getItem("CallsignStorage" + ID) + window.localStorage.getItem("DepStorage" + ID) + window.localStorage.getItem("DESTStorage" + ID));
+
+        alert("ATD year :" + NewATD + "ATD time :" + newATDstr);
+
+        var currentdate = new Date();
+        var atdDate = newATDstr.toString().substring(0, 2);
+        var atdhours = newATDstr.toString().substring(3, 5);
+        var atdMinute = newATDstr.toString().substring(6, 8);
+        var diff_atd_OnehourHour = atdhours - currentdate.getHours();
+        var diff_atd_OnehourMinute = atdMinute - currentdate.getMinutes();
+        //convert eta mminute
+        if ((atdMinute >= 0) && (atdMinute <= 9)) {
+            atdRealMinutes = 60 + parseFloat(atdMinute);
+            diff_atd_OnehourMinute_2 = atdRealMinutes - currentdate.getMinutes();
+        }
+
+        if ((atdDate >= currentdate.getDate()) && (diff_atd_OnehourHour <= 1 ) && ((diff_atd_OnehourMinute == 10) || (diff_atd_OnehourMinute_2 == 10))) {
+            window.plugins.statusBarNotification.notify("Flight will depart in 10 minutes.", "Callsign: " + window.localStorage.getItem("CallsignStorage" + ID) + "   ATD:  " + window.localStorage.getItem("AtdStorage" + ID));
+            return false;
+        }
+
+        //checking flight is departed
+        else if ((atdDate >= currentdate.getDate()) && (currentdate.getHours() == atdhours) && (currentdate.getMinutes() == atdMinute )) {
+            window.clearInterval(FlightFollow_cond_atd[ID]); //unfollow
+            window.plugins.statusBarNotification.notify("Flight is departed!", "Callsign: " + window.localStorage.getItem("CallsignStorage" + ID) + "   ATD:  " + window.localStorage.getItem("AtdStorage" + ID));
+            return false;
+
+        }
+
+    }, 60000);
+}
+
+function getATD(aircraft, callsign, dep, dest) {
+
+    sort = document.getElementById('sort');
+
+    var dateSinceDateSplit = SinceDate.value.split('/');
+    var yearS = dateSinceDateSplit[2];
+    var monthS = dateSinceDateSplit[0];
+    var dayS = dateSinceDateSplit[1];
+    if (parseFloat(dayS) < 10) {
+        dayS = "0" + dayS;
+    }
+
+    if (UntilDate.value == "") {
+        yearU = yearS;
+        monthU = monthS;
+        dayU = dayS;
+    } else {
+        var dateUntilDateSplit = UntilDate.value.split('/');
+        var yearU = dateUntilDateSplit[2];
+        var monthU = dateUntilDateSplit[0];
+        var dayU = dateUntilDateSplit[1];
+    }
+
+    var postData = new Object();
+    postData.since = yearS + monthS + dayS;
+    postData.until = yearU + monthU + dayU;
+    postData.aircraft = aircraft;
+    postData.callsign = callsign;
+    postData.dep = dep;
+    postData.depDestLink = depDestLink;
+    postData.dest = dest;
+    postData.fplType = fplType.value;
+    postData.flightRule = flightRule.value;
+    postData.flightType = flightType.value;
+    postData.flightLevel = flightLevel.value;
+    postData.reg = reg.value;
+    postData.route = route.value;
+    postData.speed = speed.value;
+    postData.squawk = squawk.value;
+    postData.startIndex = "";
+    postData.stopIndex = "";
+    postData.sort = sort.value;
+
+    $.ajax({
+        type: 'POST',
+        url: 'http://172.16.21.187/fdmcwebservices/flightplanservices.asmx/GetFlightPlansWithoutRoute',
+        dataType: 'json',
+        contentType: 'application/json; charset=utf-8',
+        data: JSON.stringify(postData),
+        success: function (result) {
+            eval("var AtdArr = new " + result.d.FlightPlans[0].Atd.split('/')[1] + ";");
+            // alert("ATD  "+AtdArr.toString());
+            window.localStorage.setItem("New_yearATD" + aircraft + callsign + dep + dest, AtdArr.toString().split(' ')[3]);
+            window.localStorage.setItem("New_AtdStorage" + aircraft + callsign + dep + dest, AtdArr.toString().split(' ')[2] + "-" + AtdArr.toString().substring(16, 18) + ":" + AtdArr.toString().substring(19, 21));
+        }
+    });
+
+}
+
+var TypeOfairport = "";
+
+function openMap(typeOfairport) {
+
+    TypeOfairport = typeOfairport;
+
+    document.getElementById("map_canvas_id").innerHTML = '';
+    $('#map_canvas_id').html('<center><br><img src="images/Filling_broken_ring.gif"> loading...</center>');
+
+    var defaultLatLng = new google.maps.LatLng(13.667338, 100.452118);  // Default to Hollywood, CA when no geolocation support
+    if (navigator.geolocation) {
+        function success(pos) {
+            // Location found, show map with these coordinates
+            drawMap(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
+        }
+
+        function fail(error) {
+            drawMap(defaultLatLng);  // Failed to find location, show default map
+        }
+
+        // Find the users current position.  Cache the location for 5 minutes, timeout after 6 seconds
+        navigator.geolocation.getCurrentPosition(success, fail, {maximumAge: 500000, enableHighAccuracy: true, timeout: 6000});
+    } else {
+        drawMap(defaultLatLng);  // No geolocation support, show default map
+    }
+    function drawMap(latlng) {
+        var myOptions = {
+            zoom: 5,
+            center: latlng,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+        var map = new google.maps.Map(document.getElementById("map_canvas_id"), myOptions);
+        var infowindow = new google.maps.InfoWindow();
+
+        $.ajax({
+            type: 'POST',
+            data: {},
+            url: 'http://172.16.21.212/AirportService/getAirportInformation.asmx/AirportInformation',
+            dataType: 'json',
+            contentType: 'application/json; charset=utf-8',
+            success: function (result) {
+
+                for (var i = 0; i < result.d.length; i++) {
+                    // Add an overlay to the map of current lat/lng
+                    var marker = new google.maps.Marker({
+                        position: new google.maps.LatLng(result.d[i].Latitude, result.d[i].Longitude),
+                        map: map,
+                        title: result.d[i].City
+                    });
+
+                    //marker
+                    google.maps.event.addListener(marker, 'click', (function (marker, i) {
+                        return function () {
+
+                            infowindow.setContent(result.d[i].Name + '// ' + result.d[i].ICAO + '<br><a onclick=\"selectAirport(\'' + result.d[i].ICAO + '\')\">select this airport</a>');
+                            infowindow.open(map, marker);
+
+                        }
+                    })(marker, i));
+
+                } //for loop
+
+            },
+            error: function (result) {
+                alert(JSON.stringify(result));
+            }
+        }); // ajax
+    }//end draw map
+    $.mobile.changePage("#map_page");
+}
+
+var airportName = '';
+
+function selectAirport(icao) {
+
+    airportName = icao;
+
+    document.getElementById(TypeOfairport).value = airportName;
+
+    var depDest;
+    if(TypeOfairport=="dep"){
+      depDest = "departure";
+    }else{
+      depDest = "destination";
+    }
+
+    navigator.notification.alert(airportName + ' set as ' + depDest, backToSearchForm, '', 'OK');
+
+
+}
+
+
+
+</script>
+
+</head>
+<body onload="onBodyLoad()"> <!-- -->
+
+<!-- page home-->
+<div data-role="page" id="Home" style="background-image: url('images/homepage_bg.png');  background-repeat: no-repeat; background-size: cover;">
+    <div data-role="header" data-theme="b" data-position="fixed" data-tap-toggle="false">
+        <center><img src="images/logo3.png" width="169px"/></center>
+        <a href="#nav-panel-menu-homepage" data-icon="bars" data-iconpos="notext">Menu</a>
+    </div>
+    <!-- /header
+    style="background-image: url('images/homepage_bg.png'); background-attachment: fixed; background-repeat: no-repeat; background-size: cover; width:100%; height:auto;" -->
+
+    <div data-role="content"
+         >
+        <table border="0" width="70%" align="center"
+               style="margin-top:20%;  background-color:#E5E4E2; border: 16px ridge(5,10,1); table-layout:fixed">
+            <tr>
+                <td width="50%"><a href="#Flightplansearch" data-transition="flip"><img
+                        src="images/flight_history_icon.png" width="90%"></a></td>
+                <td width="50%"><a href="#" data-transition="pop"><img src="images/about_aerothai_icon.png" width="90%"></a>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <!-- /content -->
+
+    <div data-role="panel" data-position-fixed="true" data-theme="a" id="nav-panel-menu-homepage">
+        <ul data-role="listview" data-theme="a" class="nav-search">
+            <p>&nbsp;</p>
+
+            <p>&nbsp;</p>
+            <li><a href="#Home">Home</a></li>
+            <li><a href="#Flightplansearch">GetFlightHistoryFlightPlans</a></li>
+        </ul>
+    </div>
+    <!-- /panel -->
+</div>
+<!-- /page home -->
+
+
+<!-- page search-->
+<div data-role="page" id="Flightplansearch">
+    <div data-theme="b" data-role="header" data-position="fixed" data-tap-toggle="false">
+        <center><img src="images/logo3.png" width="169px"/></center>
+        <a href="#nav-panel-menu-searchpage" data-icon="bars" data-iconpos="notext">Menu</a>
+        <!-- <a href="#add-form" data-icon="gear" data-iconpos="notext">Add</a> -->
+    </div>
+    <!-- /header -->
+
+    <div data-role="content">
+
+        <h3>
+            Flight History Detail Search Form
+        </h3>
+
+        <form id="formsubmit" method="POST">
+
+            <div data-role="fieldcontain">
+                <label for="SinceDate">
+                    since date
+                </label>
+                <input name="" id="SinceDate" placeholder="press to select since date" onclick="getCalendar(this)"
+                       readonly="true" data-mini="true">
+            </div>
+
+            <div data-role="fieldcontain">
+                <label for="UntilDate">
+                    until date
+                </label>
+                <input name="" id="UntilDate" placeholder="press to select until date" onclick="getCalendar(this)"
+                       readonly="true" data-mini="true">
+            </div>
+
+            <input name="" id="aircraft" placeholder="" value="" type="hidden" data-mini="true">
+
+            <div data-role="fieldcontain">
+                <label for="callsign">
+                    Call Sign
+                </label>
+                <input name="" id="callsign" placeholder="" value="" type="text" data-mini="true">
+            </div>
+
+            <div data-role="fieldcontain"> 
+              <label for="dep">
+               Aerodrome
+              </label>
+                <table border="0">
+                    <tr>
+                        <td width="100%">
+                            <input name="" id="dep" placeholder="departure" value="" type="text" data-mini="true">
+                        </td>
+
+                        <td width="25%"><!--  -->
+                            <input onclick="openMap('dep')" type="button" id="dep_map" data-mini="true"
+                                   value="Open map">
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div data-role="fieldcontain">
+                <label for="depDestLink">
+                    &nbsp;
+                </label>
+                <select id="depDestLink" name="depDestLink" data-theme="e" data-mini="true">
+                    <option value="AND">
+                        AND
+                    </option>
+                    <option value="OR">
+                        OR
+                    </option>
+                </select>
+            </div>
+
+            <div data-role="fieldcontain">
+              <label for="dest">
+                &nbsp;
+              </label>
+                <table border="0">
+                    <tr>
+                        <td width="100%">
+                            <input name="" id="dest" placeholder="destination" value="" type="text" data-mini="true">
+                        </td>
+
+                        <td width="25%"><!-- -->
+                            <input onclick="openMap('dest')" type="button" id="dest_map" data-mini="true"
+                                   value="Open map">
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <input name="" id="fplType" placeholder="" value="F,R,E,M,C" type="hidden" data-mini="true">
+            <input name="" id="flightRule" placeholder="I,V,Y,Z,S,M,G,X,N" value="I,V,Y,Z,S,M,G,X,N" type="hidden"
+                   data-mini="true">
+            <input name="" id="flightType" placeholder="1,2,3,4" value="1,2,3,4" type="hidden" data-mini="true">
+            <input name="" id="flightLevel" placeholder="" value="" type="hidden" data-mini="true">
+            <input name="" id="reg" placeholder="" value="" type="hidden" data-mini="true">
+            <input name="" id="route" placeholder="" value="" type="hidden" data-mini="true">
+            <input name="" id="speed" placeholder="" value="" type="hidden" data-mini="true">
+            <input name="" id="squawk" placeholder="" value="" type="hidden" data-mini="true">
+            <input name="" id="sort" placeholder="callsign desc" value="CALLSIGN DESC" type="hidden">
+            <input id="invoke" type="submit" data-theme="a" data-icon="search" data-iconpos="left" value="Invoke">
+        </form>
+    </div>
+    <!-- /content -->
+
+
+    <div data-role="panel" data-position-fixed="true" data-theme="a" id="nav-panel-menu-searchpage">
+        <ul data-role="listview" data-theme="a" class="nav-search">
+            <p>&nbsp;</p>
+
+            <p>&nbsp;</p>
+            <li><a href="#Home">Home</a></li>
+            <li><a href="#Flightplansearch">Flight History Detail Search</a></li>
+        </ul>
+    </div>
+    <!-- /panel -->
+
+</div>
+<!-- /page -->
+
+<!-- page search result-->
+<div data-role="page" id="search-result-page">
+    <div data-role="header" data-theme="b" data-position="fixed" data-tap-toggle="false">
+        <a href="#Flightplansearch" data-role="button" data-inline="true" data-mini="true" data-icon="back"
+           data-iconpos="left">Back</a>
+
+        <h1>Flight Plan Results</h1>
+    </div>
+    <!-- /header -->
+    <div data-role="content">
+        <!-- <div id="scrollbar1"> -->
+        <div id="myPagesLinkHead" align="center"></div>
+        <br>
+        <ul data-role="listview" data-inset="true" data-filter="true" id="flightplanlists"></ul>
+        <br>
+
+        <div id="myPagesLinkButtom"></div>
+
+        <!-- </div> /scrollbar    -->
+
+    </div>
+    <!-- /content -->
+</div>
+<!-- /page -->
+
+
+<!-- page flight plan single-->
+<div data-role="page" id="flight-page">
+    <div data-role="header" data-theme="b" data-position="fixed" data-tap-toggle="false">
+        <a href="#search-result-page" data-role="button" data-inline="true" data-mini="true" data-icon="back"
+           data-iconpos="left">Back</a>
+
+        <h1>Result</h1>
+    </div>
+    <!-- /header -->
+    <div data-role="content">
+
+        <div id="flightResult"></div>
+
+    </div>
+    <!-- /content -->
+</div>
+<!-- /page -->
+
+<div data-role="page" id="map_page" style="width:100%;height:100%;padding:0;">
+    <div data-role="header" data-theme="b" data-position="fixed" data-tap-toggle="false">
+        <a href="#Flightplansearch" data-role="button" data-inline="true" data-mini="true" data-icon="back"
+           data-iconpos="left">Back</a>
+
+        <h1>Map</h1>
+    </div>
+    <!-- /header -->
+    <div data-role="content" id="map_canvas_content" style="width:100%;height:100%;padding:0;">
+
+        <div id="map_canvas_id"></div>
+
+    </div>
+    <!-- /content -->
+</div>
+<!-- end map page -->
+
+</body>
+</html>
