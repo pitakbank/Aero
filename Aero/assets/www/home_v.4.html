@@ -70,9 +70,19 @@ function alertDismissed() {
     // do something
 }
 
+function backToSearchForm(){
+  document.location.href = "#Flightplansearch";
+}
+
 $(function () {
 
     $("#formsubmit").submit(function () {
+
+      document.location.href = "#search-result-page";
+      $('#myPagesLinkHead').html('');
+      $('#myPagesLinkHead').html('<img src="images/Filling_broken_ring.gif"> loading...');
+      $("ul#flightplanlists li").remove();
+      $('#myPagesLinkButtom').html('');
 
         SinceDate = document.getElementById('SinceDate');
         UntilDate = document.getElementById('UntilDate');
@@ -136,15 +146,10 @@ $(function () {
             success: function (result) {
 
               if(result.d == 0){
-                navigator.notification.alert('No Flight', alertDismissed, '', 'OK');
+                navigator.notification.alert('No Flight', backToSearchForm, '', 'OK');
                 return false;
               }
               else{
-                document.location.href = "#search-result-page";
-                $('#myPagesLinkHead').html('');
-                $('#myPagesLinkHead').html('<img src="images/Filling_broken_ring.gif"> loading...');
-                $("ul#flightplanlists li").remove();
-                $('#myPagesLinkButtom').html('');
 
                 AmountOfPlans = result.d;
 
@@ -159,6 +164,7 @@ $(function () {
             },
             error: function (result) {
                 alert("error1!" + result.responseText);
+                document.location.href = "#Flightplansearch";
             }
         }); // ajax
         return false; // ไม่ให้ form มัน load ใหม่
@@ -272,7 +278,7 @@ function getFlightPlans(startIndexParam, stopIndexParam) {
             var pageTable = "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" style=\"color: black; background: #fff; border: 1px solid #b4b4b4; font: bold 17px helvetica; padding: 0; margin-top:10px;  width: 100%; -webkit-border-radius: 8px;\"><tr style=\"color: #0000;\"><tbody><tr>";
             for (var pageCount = 0; pageCount < AmountOfPages; pageCount++) { //class="active"
 
-                pageTable += "<td><a onclick=\"getFlightPlans(" + ((pageCount * 50) + 1) + "," + ((pageCount * 50) + 50) + ")\" >" + Firstpage + "</a> | </td>";
+                pageTable += "<td>| <a onclick=\"getFlightPlans(" + ((pageCount * 50) + 1) + "," + ((pageCount * 50) + 50) + ")\" >" + Firstpage + "</a>  |</td>";
                 Firstpage++;
             }
 
@@ -314,7 +320,7 @@ function viewFlightPlan(ID) {
         ATD = "<font color=\"green\">" + window.localStorage.getItem("AtdStorage" + ID) + "</font>";
     }
 
-    document.getElementById('flightResult').innerHTML = "Aircraft: " + window.localStorage.getItem("AircraftStorage" + ID) + "<br>Callsign: " + window.localStorage.getItem("CallsignStorage" + ID) + "<br>Departure: " + window.localStorage.getItem("DepStorage" + ID) + "<br>Etd: " + window.localStorage.getItem("EtdStorage" + ID) + "<br>Atd: " + ATD + "<br>Destination: " + window.localStorage.getItem("DESTStorage" + ID) + "<br>Eta: " + window.localStorage.getItem("EtaStorage" + ID) + "<br>Ata: " + ATA + "<br><input type=\"button\" id=\"btFollow" + ID + "\" value=\"Follow this flight\" onclick=\"followFlight(" + ID + ")\" />";
+    document.getElementById('flightResult').innerHTML = "<table border=\"0\"><tr><td>Aircraft: </td><td>" + window.localStorage.getItem("AircraftStorage" + ID) + "</td></tr><tr><td>Callsign: </td><td>" + window.localStorage.getItem("CallsignStorage" + ID) + "</td></tr><tr><td>Departure: </td><td>" + window.localStorage.getItem("DepStorage" + ID) + "</td></tr><tr><td>Etd: </td><td>" + window.localStorage.getItem("EtdStorage" + ID) + "</td></tr><tr><td>Atd: </td><td>" + ATD + "</td><tr><td>Destination: </td><td>" + window.localStorage.getItem("DESTStorage" + ID) + "</td></tr><tr><td>Eta: </td><td>" + window.localStorage.getItem("EtaStorage" + ID) + "</td></tr><tr><td>Ata: </td><td>" + ATA + "</td></tr></table><br><input type=\"button\" id=\"btFollow" + ID + "\" value=\"Follow this flight\" onclick=\"followFlight(" + ID + ")\" style=\"background-color: #C0C0C0;\"/>";
     document.location.href = "#flight-page";
 // check eta
 
@@ -325,7 +331,8 @@ var FlightFollow_cond_atd = new Array();
 
 function UnfollowFlight(ID) {
     window.clearInterval(FlightFollowId[ID]);
-    $("#btFollow" + ID).attr("defaultValue", "Follow this flight!");
+    $("#btFollow" + ID).val("Follow this flight!");
+    // $("#btFollow" + ID).attr('style','background-color: #C0C0C0;');
     $("#btFollow" + ID).attr('onclick', 'followFlight(' + ID + ')');
     navigator.notification.alert('Flight is unfollow!!', alertDismissed, 'Unfollow', 'OK');
     return false;
@@ -357,6 +364,7 @@ function followFlight(ID) {
     }
     else {
         $("#btFollow" + ID).val("Unfollow!");
+        // $("#btFollow" + ID).attr('style','background-color: ##57A957;');
         $("#btFollow" + ID).attr('onclick', 'UnfollowFlight(' + ID + ')');
         navigator.notification.alert('You are following this flight!', alertDismissed, 'Followed', 'Done');
 
@@ -590,7 +598,7 @@ function openMap(typeOfairport) {
                     google.maps.event.addListener(marker, 'click', (function (marker, i) {
                         return function () {
 
-                            infowindow.setContent(result.d[i].City + '// ' + result.d[i].ICAO + '<br><a onclick=\"selectAirport(\'' + result.d[i].ICAO + '\')\">select this airport</a>');
+                            infowindow.setContent(result.d[i].Name + '// ' + result.d[i].ICAO + '<br><a onclick=\"selectAirport(\'' + result.d[i].ICAO + '\')\">select this airport</a>');
                             infowindow.open(map, marker);
 
                         }
@@ -621,9 +629,13 @@ function selectAirport(icao) {
     }else{
       depDest = "destination";
     }
-    alert(airportName + " set as " + depDest);
+
+    navigator.notification.alert(airportName + ' set as ' + depDest, backToSearchForm, '', 'OK');
+
 
 }
+
+
 
 </script>
 
@@ -645,8 +657,8 @@ function selectAirport(icao) {
                style="margin-top:20%;  background-color:#E5E4E2; border: 16px ridge(5,10,1); table-layout:fixed">
             <tr>
                 <td width="50%"><a href="#Flightplansearch" data-transition="flip"><img
-                        src="images/flight_history_icon.png" width="70%"></a></td>
-                <td width="50%"><a href="#" data-transition="pop"><img src="images/about_aerothai_icon.png" width="70%"></a>
+                        src="images/flight_history_icon.png" width="90%"></a></td>
+                <td width="50%"><a href="#" data-transition="pop"><img src="images/about_aerothai_icon.png" width="90%"></a>
                 </td>
             </tr>
         </table>
